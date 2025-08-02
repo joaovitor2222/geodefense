@@ -1,0 +1,4148 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Defense</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        canvas {
+            background-color: #333;
+            border: 2px solid #555;
+            cursor: pointer;
+        }
+
+        #ui-container {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #282828;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #tower-selection {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tower-button {
+            padding: 10px 15px;
+            border: 2px solid #555;
+            background-color: #444;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.2s, border-color 0.2s;
+            text-align: center;
+        }
+
+        .tower-button:hover {
+            background-color: #5a5a5a;
+            border-color: #777;
+        }
+
+        .tower-button.selected {
+            border-color: #00ffff;
+            background-color: #005f5f;
+        }
+
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            border: 3px solid #ff4444;
+        }
+
+        #game-over-screen h1 {
+            margin-top: 0;
+            color: #ff4444;
+        }
+
+        .tower-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 0 auto 5px auto;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Estilos para a Tela de Dificuldade */
+        #difficulty-selection-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: #fff;
+            text-align: center;
+        }
+
+        .difficulty-box {
+            background-color: #282828;
+            padding: 30px 40px;
+            border-radius: 15px;
+            border: 2px solid #555;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .diff-btn {
+            padding: 15px 20px;
+            background-color: #444;
+            border: 2px solid #666;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diff-btn:hover {
+            background-color: #5a5a5a;
+            border-color: #00ffff;
+        }
+
+        .diff-btn strong {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .diff-btn span {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        #difficulty-timer {
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        /* Estilos para Controles Personalizados */
+        #custom-spawn-controls {
+            display: flex;
+            /* Alterado por JS para 'flex' quando ativo */
+            align-items: center;
+            justify-content: space-between;
+            width: 800px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #282828;
+            border-radius: 8px;
+            border: 1px solid #ffd700;
+        }
+
+        #spawn-buttons-container {
+            display: flex;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .spawn-btn {
+            padding: 8px 12px;
+            background-color: #555;
+            color: white;
+            border: 2px solid #777;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .spawn-btn:hover {
+            background-color: #6a6a6a;
+        }
+
+        .golden-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 20px;
+        }
+
+        .golden-toggle-container label {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Botão de navegação */
+        .nav-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background-color: #87CEFA;
+            /* azul-claro */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .nav-button:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-button img {
+            width: 28px;
+            height: 28px;
+        }
+
+        #challenge-btn {
+            padding: 8px 12px;
+            background: #444;
+            color: white;
+            border: 2px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #challenge-btn:disabled {
+            background: #222;
+            border-color: #333;
+            cursor: not-allowed;
+        }
+
+        .shop-button {
+            padding: 10px 15px;
+            border: 2px solid #555;
+            background-color: #3087ea;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.2s, border-color 0.2s;
+            text-align: center;
+        }
+
+        .shop-button:hover {
+            background-color: #5a5a5a;
+            border-color: #777;
+        }
+
+        /* Estilo para quando o power-up está selecionado */
+        .shop-button.selected {
+            border-color: #f0f;
+            /* Um rosa/magenta para diferenciar da seleção de torre */
+            background-color: #509;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 id="title">
+        Geo <span class="secret-trigger">D</span>efense
+    </h1>
+    <a href="info.html" class="nav-button" title="Ver informações das torres e inimigos">
+        <img src="https://cdn-icons-png.flaticon.com/256/5726/5726716.png" alt="Info">
+    </a>
+    <div id="ui-container">
+        <div id="stats">
+            <span id="money">Moedas: 10000</span> |
+            <span id="lives">Vidas: 20</span> |
+            <span id="wave">Inimigos Spawnados: 0</span> |
+            <span id="mana">Mana: <img src="https://cdn-icons-png.flaticon.com/512/15532/15532278.png" alt="Mana"
+                    style="width:16px;vertical-align:middle"> <span id="mana-value">0</span></span>
+        </div>
+    </div>
+    <button id="video-btn" style="display:none; position:absolute; top:10px; left:50%;
+ transform:translateX(-50%); z-index:1000; font-size:18px; padding:10px 20px;
+ background-color:#ffc107; border:none; border-radius:8px; cursor:pointer;">
+        🎥 Ver vídeo especial
+    </button>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="tower-selection">
+    </div>
+
+    <div id="special-tower-shop" style="display:flex; gap:12px; justify-content:center;">
+    </div>
+
+
+    <div id="game-over-screen">
+        <h1>FIM DE JOGO</h1>
+        <p>Os inimigos chegaram à sua base.</p>
+        <button onclick="location.reload()">Jogar Novamente</button>
+    </div>
+
+    <div id="difficulty-selection-screen">
+        <div class="difficulty-box">
+            <h1>Escolha a Dificuldade</h1>
+            <p>A dificuldade "Médio" será selecionada automaticamente em <span id="difficulty-timer">40</span>s.</p>
+            <div class="difficulty-buttons">
+                <button class="diff-btn" data-difficulty="FACIL">
+                    <strong>Fácil</strong>
+                    <span>-10% Vida/Velocidade. Vira Médio após 250 inimigos.</span>
+                </button>
+                <button class="diff-btn" data-difficulty="MEDIO">
+                    <strong>Médio</strong>
+                    <span>A experiência padrão.</span>
+                </button>
+                <button class="diff-btn" data-difficulty="DIFICIL">
+                    <strong>Difícil</strong>
+                    <span>+10% Vida, +5% Velocidade.</span>
+                </button>
+                <button class="diff-btn" data-difficulty="PRO">
+                    <strong>Pro</strong>
+                    <span>+10% Vida/Velocidade.</span>
+                </button>
+                <button class="diff-btn" data-difficulty="INSANO">
+                    <strong>Insano</strong>
+                    <span>+15% Vida, +12% Velocidade. Vida aumenta com o tempo.</span>
+                </button>
+                <button class="diff-btn" data-difficulty="CRUEL" style="border-color: #ff4444;">
+                    <strong>Cruel</strong>
+                    <span>+25% Vida/Velocidade. Chefes roubam seu dinheiro e inimigos ficam mais fortes com o
+                        tempo.</span>
+                </button>
+                <button class="diff-btn" data-difficulty="PERSONALIZADO" style="border-color: #ffd700;">
+                    <strong>Personalizado</strong>
+                    <span>Dinheiro/Vida infinitos, controle manual de inimigos.</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="secret-menu" style="display:none; margin:10px 0; text-align:center;">
+        <input id="secret-input" type="text" placeholder="Comando..." />
+        <button id="secret-send">OK</button>
+        <small>Digite <strong>help</strong> para ver os comandos</small>
+    </div>
+
+    <!-- Loja de Evoluções -->
+    <div id="evolution-shop"
+        style="margin: 20px 0; width: 800px; background: #222; border-radius: 10px; padding: 16px; box-shadow: 0 0 10px #000;">
+        <h2 style="color: #ffd700; text-align: center;">Loja de Evoluções</h2>
+        <div id="evolution-list" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;"></div>
+    </div>
+
+    <div id="powerup-shop"
+        style="margin:20px auto; width:800px; background:#222; padding:16px; border-radius:8px; color:#f0f0f0;">
+        <h2 style="color:#00ffff; text-align:center;">Loja de Power-ups</h2>
+        <div id="powerup-list" style="display:flex; gap:12px; justify-content:center;"></div>
+    </div>
+
+
+    <div id="custom-spawn-controls" style="display: none;">
+        <div id="spawn-buttons-container">
+        </div>
+        <div class="golden-toggle-container" style="flex-direction: column; align-items: flex-start;">
+            <input type="checkbox" id="golden-toggle">
+            <label for="golden-toggle">Dourado ✨</label>
+            <input type="checkbox" id="prismatic-toggle" style="margin-top:8px;">
+            <label for="prismatic-toggle">Prismático 💎</label>
+        </div>
+    </div>
+
+    <!-- Botão Desafio -->
+    <button id="challenge-btn">Desafio</button>
+    <!-- Barra de cooldown (10 min) -->
+    <div id="challenge-cooldown" style="
+        position: relative;
+        width: 150px; height: 10px;
+        background: #333; margin-left: 10px;
+        border: 1px solid #555;">
+        <div id="challenge-cooldown-bar" style="
+        width: 0%; height: 100%;
+        background: cyan;
+        transition: width 0.2s linear;">
+        </div>
+    </div>
+
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Configurações do Jogo ---
+        let money = 4000; // Dinheiro inicial para poder comprar uma torre barata
+        let lives = 20;
+        let totalEnemiesSpawned = 0;
+        let selectedTower = null;
+        let mouse = { x: 0, y: 0 };
+        let gameRunning = false;
+        let tankSpawnCounter = 0;
+        let bossSpawnCount = 0; // <<< ADICIONE ESTA LINHA
+        let customBossCount = 0; // Contador de chefes para o modo personalizado
+
+        // --- NOVAS VARIÁVEIS DE DIFICULDADE ---
+        let currentDifficulty = 'MEDIO'; // Padrão
+        let insaneRampCounter = 0; // Contador para a dificuldade Insano
+        let difficultyTimerInterval;
+
+        const puddles = []; // Array para as poças de morteiro
+
+        // ——— Configuração do Desafio ———
+        const challenge = {
+            stage: 0,
+            base: { rapidos: 15, normais: 10, disruptores: 3, tanks: 2, invocadores: 2, fantasmas: 3, chefes: 1 },
+            inc: { rapidos: 8, normais: 5, disruptores: 1, tanks: 1, invocadores: 1, fantasmas: 2, chefes: 0 },
+            queue: [],
+            active: 0,
+            cooldown: 10 * 60 * 1000, // 10 minutos em ms
+            nextAvailable: 0,
+        };
+
+        const DIFFICULTY_SETTINGS = {
+            FACIL: { healthMod: 0.90, speedMod: 0.90, ramp: false },
+            MEDIO: { healthMod: 1.00, speedMod: 1.00, ramp: false },
+            DIFICIL: { healthMod: 1.10, speedMod: 1.05, ramp: false },
+            PRO: { healthMod: 1.10, speedMod: 1.10, ramp: false },
+            INSANO: { healthMod: 1.15, speedMod: 1.12, ramp: true },
+            CRUEL: { healthMod: 1.25, speedMod: 1.25, ramp: true, isCruel: true },
+            PERSONALIZADO: { healthMod: 1.00, speedMod: 1.00, ramp: false, isCustom: true } // Novo Modo
+        };
+
+        const towers = [];
+        const enemies = [];
+        const projectiles = [];
+        const particles = [];
+
+        let mana = 0;        // Mana inicial
+        const maxMana = 1000;   // (opcional) limite máximo
+        let selectedPowerup = null;
+        let selectedSpecialTower = null;
+
+
+        const path = [
+            { x: 0, y: 300 },
+            { x: 150, y: 300 },
+            { x: 150, y: 100 },
+            { x: 650, y: 100 },
+            { x: 650, y: 500 },
+            { x: 100, y: 500 },
+            { x: 100, y: 300 },
+            { x: 800, y: 300 }
+        ];
+
+        // Substitua seu objeto POWERUPS por este
+        const POWERUPS = {
+            freeze: {
+                name: 'Congelamento',
+                costGold: 0,
+                costMana: 20,
+                radius: 100,
+                cooldown: 50_000,
+                duration: 10_000,    // por exemplo
+                lastUsed: -Infinity,
+                canActivate() {
+                    return Date.now() - this.lastUsed >= this.cooldown;
+                },
+                activate(x, y) {
+                    if (!this.canActivate()) return false;
+                    this.lastUsed = Date.now();
+                    // lógica de congelar inimigos no raio...
+                    setTimeout(() => {
+                        // desfaz efeito de congelamento
+                    }, this.duration);
+                    return true;
+                }
+            },
+
+            hypnosis: {
+                name: 'Hipnose',
+                costGold: 0,
+                costMana: 25,
+                radius: 100,
+                cooldown: 40_000,
+                duration: 12_000,
+                lastUsed: -Infinity,
+                canActivate() { /*…*/ },
+                activate(x, y) { /*…*/ }
+            },
+
+            poison: {
+                name: 'Veneno',
+                costGold: 0,
+                costMana: 35,
+                radius: 150,
+                cooldown: 70_000,
+                duration: 15_000,
+                lastUsed: -Infinity,
+                canActivate() { /*…*/ },
+                activate(x, y) { /*…*/ }
+            },
+
+            goldSurge: {
+                name: 'Surto de Ouro',
+                costGold: 3000,
+                costMana: 0,
+                radius: 100,
+                cooldown: 100_000,      // agora 100s
+                duration: 20_000,       // duração da “poça”
+                lastUsed: -Infinity,
+
+                canActivate() {
+                    return Date.now() - this.lastUsed >= this.cooldown;
+                },
+
+                activate(originX, originY) {
+                    if (!this.canActivate()) return false;
+                    this.lastUsed = Date.now();
+
+                    const puddle = new GoldSurgePuddle(originX, originY, this.radius, this.duration);
+                    puddles.push(puddle);
+
+                    // agora o powerupAura carrega a key e o Set de inimigos já disparados
+                    powerupAuras.push({
+                        key: 'goldSurge',
+                        x: originX,
+                        y: originY,
+                        radius: this.radius,
+                        triggeredEnemies: puddle.triggeredEnemies,
+                        expires: Date.now() + this.duration
+                    });
+
+                    createParticleEffect(originX, originY, 40, 'gold', this.radius);
+                    return true;
+                }
+            }
+        };
+        let lastPowerupRefresh = Date.now();
+        let availablePowerups = [];  // índices em POWERUPS
+
+        let powerupAuras = [];
+
+        const game = {
+            paused: false,             // flag de pausa
+            isPaused() { return this.paused; },
+            pause() { this.paused = true; console.log('Jogo pausado'); },
+            play() { this.paused = false; console.log('Jogo reiniciado'); }
+        };
+
+        game.paused = false;
+        // guarda o ID do requestAnimationFrame
+        game._loopId = null;
+
+
+        // --- Classes do Jogo ---
+
+        class Tower {
+            constructor(x, y, cost) {
+                this.x = x;
+                this.y = y;
+                this.cost = cost;
+                this.lastShotTime = 0;
+                this.target = null;
+
+                this.isBuffActive = false;
+                // e, opcionalmente, o flag de Fúria local
+                this.isFury = false;
+            }
+
+            getFurySlowFactor() {
+                return towers.some(t =>
+                    t instanceof FuryManaTower &&
+                    t.isBuffActive &&
+                    t.isAllyInRange(this)
+                ) ? 0.3 : 1;
+            }
+
+            findTarget() {
+                this.target = null;
+                let closestDist = Infinity;
+                for (const enemy of enemies) {
+                    // **pula** fantasmas invisíveis
+                    if (enemy instanceof FantasmaEnemy && enemy.isInvisible) continue;
+
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist < closestDist && dist <= this.range) {
+                        closestDist = dist;
+                        this.target = enemy;
+                    }
+                }
+
+            }
+
+            isBuffedByFury() {
+                // 'towers' é o array global de todas as torres no mapa
+                return towers.some(t =>
+                    t instanceof FuryManaTower && // É uma Torre da Fúria?
+                    t.isBuffActive &&              // O buff dela está ativo?
+                    t.isAllyInRange(this)          // Esta torre está no alcance dela?
+                );
+            }
+
+            hasTarget() {
+                return this.target !== null && this.target.health > 0;
+            }
+
+            update(timestamp) {
+                this.justFired = false;
+                this.findTarget();
+                this.attack(timestamp);
+            }
+        }
+
+        class EletroTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.ELETRO.cost);
+                this.color = TOWER_TYPES.ELETRO.color;
+                this.range = 120;
+                this.damage = 16000;
+                this.aoeRadius = 60;
+                this.cooldown = 10000;
+                this.isCharged = false;
+                this.chargeTimestamp = Date.now();
+                this.evolutionKey = "eletro";
+                this.lastAttack = 0;
+                this.shotCount = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                if (this.isCharged) {
+                    const pulse = Math.abs(Math.sin(Date.now() / 200));
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${pulse})`;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 18, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else {
+                    // 1) obtém o slowFactor da Fúria (0.3 se em aura, 1 caso contrário)
+                    const slowFactor = this.getFurySlowFactor();
+                    // 2) monta o cooldown efetivo (Fúria + Surto de Ouro)
+                    let baseCooldown = this.cooldown;
+                    if (purchasedEvolutions.eletro) {
+                        // O cooldown do PRÓXIMO tiro depende do shotCount + 1
+                        baseCooldown = ((this.shotCount + 1) % 3 === 0) ? 1000 : 10000;
+                    }
+                    let effectiveCooldown = baseCooldown * slowFactor;
+                    if (this.isBuffActive) {
+                        effectiveCooldown /= 1.5; // 50% mais rápido com Surto de Ouro
+                    }
+                    // 3) calcula o progresso com base no cooldown efetivo
+                    const chargeProgress = (Date.now() - this.chargeTimestamp) / effectiveCooldown;
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 18, -Math.PI / 2, -Math.PI / 2 + Math.min(chargeProgress, 1) * Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            // A assinatura do método ainda recebe timestamp, mas não o usamos mais aqui.
+            update(timestamp) {
+                const now = Date.now();
+
+                // 1. Define o cooldown base (considerando a evolução)
+                let baseCooldown = this.cooldown;
+                if (purchasedEvolutions.eletro) {
+                    // No 3º tiro (quando shotCount é 2), o cooldown é de 1s, nos outros é 10s
+                    baseCooldown = (this.shotCount % 3 === 2) ? 1000 : 10000;
+                }
+
+                // 2. Verifica se está sob efeito da Fúria e calcula o cooldown efetivo
+                const isBuffed = this.isBuffedByFury();
+                const effectiveCooldown = baseCooldown * (isBuffed ? 0.3 : 1); // 70% mais rápido se buffado
+
+                // 3. Carrega a torre usando o cooldown efetivo
+                if (!this.isCharged) {
+                    if (now - this.chargeTimestamp >= effectiveCooldown) {
+                        this.isCharged = true;
+                    }
+                }
+
+                // 4. Se carregou, procura um alvo e ataca
+                if (this.isCharged) {
+                    this.findTarget();
+                    if (this.target) {
+                        // Chama o método de ataque correto (com ou sem evolução)
+                        if (purchasedEvolutions.eletro) {
+                            this.attack(timestamp);
+                        } else {
+                            this.attackBase();
+                        }
+                        this.isCharged = false;
+                        this.chargeTimestamp = now; // Reseta o timer para a próxima recarga
+                    }
+                }
+            }
+
+            // MÉTODO ATTACK SIMPLIFICADO: CUIDA APENAS DO DANO DA VERSÃO EVOLUÍDA
+            attack(timestamp) {
+                this.justFired = true;
+                let finalDamage = this.damage;
+
+                // Verifica se está buffado pela Fúria para aumentar o dano
+                if (this.isBuffedByFury()) {
+                    finalDamage *= 3;
+                }
+
+                // Incrementa o contador de tiros para a lógica do próximo cooldown
+                this.shotCount++;
+
+                // Cria a explosão com o dano final
+                createParticleEffect(this.target.x, this.target.y, 100, this.color, this.aoeRadius);
+                for (const enemy of enemies) {
+                    if (Math.hypot(this.target.x - enemy.x, this.target.y - enemy.y) <= this.aoeRadius) {
+                        enemy.takeDamage(finalDamage);
+                    }
+                }
+            }
+
+            attackBase() {
+                createParticleEffect(this.target.x, this.target.y, 100, this.color, this.aoeRadius);
+                for (const enemy of enemies) {
+                    const dist = Math.hypot(this.target.x - enemy.x, this.target.y - enemy.y);
+                    if (dist <= this.aoeRadius) {
+                        enemy.takeDamage(this.damage);
+                    }
+                }
+            }
+        }
+
+
+        class MetralhadoraTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.METRALHADORA.cost);
+                this.color = TOWER_TYPES.METRALHADORA.color;
+                this.range = 50;
+                this.damage = 200;
+                this.cooldown = 200;
+                this.lastShotTime = 0;
+                this.evolutionKey = "metralhadora";
+                this.lastFury = 0;
+                this.isFury = false; // Estado da Fúria
+            }
+
+            draw() {
+                // Desenho base da torre
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // --- NOVO: Efeito de aura prismática durante a Fúria ---
+                if (this.isFury) {
+                    const hue = (Date.now() / 10) % 360; // Ciclo de cores
+                    ctx.save();
+                    ctx.globalAlpha = 0.5 + Math.abs(Math.sin(Date.now() / 200)) * 0.3; // Alpha pulsante
+                    ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+                    ctx.lineWidth = 4;
+                    ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2); // Aura no limite do alcance
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            update(timestamp) {
+                super.update(timestamp);
+                if (!purchasedEvolutions.metralhadora) return;
+
+                // Ativa a fúria a cada 30s se houver um alvo
+                if (timestamp - this.lastFury >= 30000 && this.hasTarget()) {
+                    this.lastFury = timestamp;
+                    this.isFury = true;
+                    // Desativa a fúria após 5 segundos
+                    setTimeout(() => this.isFury = false, 5000);
+                }
+            }
+
+            // CÓDIGO CORRIGIDO na classe MetralhadoraTower
+            attack(timestamp) {
+                // 1) se não tiver alvo, sai
+                if (!this.target) return;
+
+                // 2) calcula slowFactor via FuryManaTower (0.3 na área, 1 fora)
+                const slowFactor = this.getFurySlowFactor();
+
+                // 3) só dispara se o cooldown (ajustado pelo buff) tiver passado
+                if (timestamp - this.lastShotTime < this.cooldown * slowFactor) return;
+                this.lastShotTime = timestamp;
+
+                // 4) calcula dano final antes de criar o projétil
+                let damageMultiplier = this.isFury ? 4 : 1;   // buff local ×4
+                if (slowFactor < 1) damageMultiplier *= 3;   // buff de área ×3
+                const finalDamage = this.damage * damageMultiplier;
+                const finalColor = (slowFactor < 1) ? 'red' : this.color;
+
+                // 5) dispara
+                projectiles.push(
+                    new Projectile(
+                        this.x, this.y,
+                        finalDamage,
+                        15,
+                        this.target,
+                        finalColor,
+                        0,     // aoeRadius
+                        false, // isHoming
+                        false, // isMortar
+                        this   // firerTower
+                    )
+                );
+
+                this.justFired = true;
+            }
+
+        }
+
+        class MorteiroTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.MORTEIRO.cost);
+                this.color = TOWER_TYPES.MORTEIRO.color;
+                this.range = 250;
+                this.minRange = 30;
+                this.damage = 350;
+                this.aoeRadius = 50;
+                this.cooldown = 3000;
+                this.lastShotTime = 0;
+                this.evolutionKey = "morteiro";
+                this.shotCount = 0;
+            }
+
+            findTarget() {
+                this.target = null;
+                let closestDist = Infinity;
+                for (const enemy of enemies) {
+                    if (enemy instanceof FantasmaEnemy && enemy.isInvisible) continue;
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist < closestDist && dist <= this.range && dist >= this.minRange) {
+                        closestDist = dist;
+                        this.target = enemy;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#654321';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            attack(timestamp) {
+                // 0) sem evolução: só dispara tiro em ARCO normal
+                if (!purchasedEvolutions.morteiro) {
+                    if (!this.target) return;
+                    if (timestamp - this.lastShotTime < this.cooldown) return;
+                    this.lastShotTime = timestamp;
+
+                    projectiles.push(
+                        new Projectile(
+                            this.x,               // posX
+                            this.y,               // posY
+                            this.damage,          // dano base
+                            this.projectileSpeed, // velocidade
+                            this.target,          // alvo
+                            this.color,           // cor
+                            this.aoeRadius,       // aoeRadius
+                            false,                // isHoming = false
+                            true,                 // isMortar = true (trajetória de morteiro)
+                            this,                 // firerTower (para Surto de Ouro)
+                            false,                // isExplosive = false
+                            true                  // isArc = true
+                        )
+                    );
+                    return;
+                }
+
+                // 1) só dispara se tiver alvo
+                if (!this.target) return;
+
+                // 2) ajusta reload time pela aura (slowFactor <1 dentro da aura)
+                const slowFactor = this.getFurySlowFactor();
+
+                // 3) respeita cooldown modificado pela aura
+                if (timestamp - this.lastShotTime < this.cooldown * slowFactor) return;
+                this.lastShotTime = timestamp;
+                this.shotCount++;
+                this.justFired = true;
+
+                // 4) define se o tiro é explosivo (a cada 3º) e se faz homing/arco
+                const isExplosive = this.shotCount % 3 === 0;
+                const isHoming = isExplosive;
+                const isArc = !isExplosive;
+
+                // 5) calcula multiplicador de dano:
+                //    ×4 se estiver em fúria, ×3 extra se dentro da aura
+                let damageMultiplier = this.isFury ? 4 : 1;
+                if (slowFactor < 1) damageMultiplier *= 3;
+                const finalDamage = this.damage * damageMultiplier;
+                const finalColor = slowFactor < 1 ? 'red' : this.color;
+
+                // 6) dispara o projétil com os flags corretos
+                projectiles.push(
+                    new Projectile(
+                        this.x,             // posX
+                        this.y,             // posY
+                        finalDamage,        // dano ajustado
+                        5,                  // velocidade fixa de morteiro
+                        this.target,        // alvo
+                        finalColor,         // cor
+                        this.aoeRadius,     // aoeRadius
+                        isHoming,           // isHoming?
+                        true,               // isMortar
+                        this,               // firerTower (para Surto de Ouro)
+                        isExplosive,        // explode no impacto?
+                        isArc               // é arco?
+                    )
+                );
+            }
+        }
+
+        class BalanceadaTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.BALANCEADA.cost);
+                this.color = TOWER_TYPES.BALANCEADA.color;
+                this.range = 150;
+                this.damage = 800;
+                this.baseDamage = 800;
+                this.cooldown = 1000;
+                this.evolutionKey = "balanceada";
+                this.shotCount = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#fff";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 16, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            attack(timestamp) {
+                if (!this.target || timestamp - this.lastShotTime < this.cooldown) return;
+                this.lastShotTime = timestamp;
+                this.shotCount++;
+                const slowFactor = this.getFurySlowFactor();
+                if (timestamp - this.lastAttackTime < this.fireRate * slowFactor) return;
+                this.lastAttackTime = timestamp;
+                let damageMultiplier = this.isFury ? 4 : 1;
+                if (slowFactor < 1) damageMultiplier *= 3;
+                const finalDamage = this.baseDamage * damageMultiplier;
+                const finalColor = slowFactor < 1 ? 'red' : this.color;
+
+                if (purchasedEvolutions.balanceada && this.shotCount % 3 === 0) {
+                    // envenena
+                    this.target.applyEffect("poison", 7000, {
+                        dps: 300,
+                        stackBonus: 300,
+                        maxStacks: 4,
+                        maxDps: 2100
+                    });
+                }
+                projectiles.push(
+                    new Projectile(
+                        this.x,          // 1: x
+                        this.y,          // 2: y
+                        finalDamage,     // 3: dano
+                        10,              // 4: speed
+                        this.target,     // 5: target
+                        finalColor,      // 6: color
+                        0,               // 7: aoeRadius
+                        false,           // 8: isHoming   (não é teleguiado)
+                        false,           // 9: isMortar   (não é morteiro)
+                        this,            // 10: firerTower
+                        false            // 11: isExplosive
+                    )
+                );
+                this.justFired = true;
+            }
+        }
+
+        class GeloTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.GELO.cost);
+                this.color = TOWER_TYPES.GELO.color;
+
+                // Atributos da Aura
+                this.slowAuraRadius = 100;
+                this.slowPercentage = 0.80; // Valor do seu arquivo
+                this.slowDuration = 3000;
+                // A propriedade de dano da aura foi removida.
+
+                // Atributos do Ataque Especial
+                this.range = 120;
+                this.specialAttackDamage = 500;
+                this.freezeDuration = 5000;
+                this.specialAttackCooldown = 10000;
+                this.lastSpecialAttackTime = Date.now();;
+
+                // Atributos da Evolução
+                this.evolutionKey = "gelo";
+                this.lastSuper = Date.now();
+            }
+
+            // ...classe GeloTower...
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 16, 0, Math.PI * 2);
+                ctx.fill();
+                const pulse = Math.abs(Math.sin(Date.now() / 500));
+                ctx.globalAlpha = 0.10 + (pulse * 0.1);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.slowAuraRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+
+                // --- Cronômetro do ataque especial (10s) ---
+                const now = Date.now();
+                // calcula slowFactor via FuryManaTower (0.3 quando em Fúria, senão 1)
+                const slowFactor = this.getFurySlowFactor();
+                // aplica slowFactor ao cooldown original
+                const effectiveCooldown = this.specialAttackCooldown * slowFactor;
+                let timeLeft = Math.ceil((this.lastSpecialAttackTime + effectiveCooldown - now) / 1000);
+                if (timeLeft < 0) timeLeft = 0;
+                ctx.save();
+                ctx.font = "bold 13px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#fff";
+                ctx.strokeStyle = "#222";
+                ctx.lineWidth = 2;
+                ctx.strokeText(timeLeft, this.x, this.y + 2);
+                ctx.fillText(timeLeft, this.x, this.y + 2);
+                ctx.restore();
+
+                // --- Cronômetro do super ataque (60s, só se evolução) ---
+                if (purchasedEvolutions.gelo) {
+                    let superLeft = Math.ceil((this.lastSuper + 60000 - now) / 1000);
+                    if (superLeft < 0) superLeft = 0;
+                    // Cor arco-íris
+                    const hue = (now / 8) % 360;
+                    ctx.save();
+                    ctx.font = "bold 11px Arial";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = `hsl(${hue},100%,60%)`;
+                    ctx.strokeStyle = "#222";
+                    ctx.lineWidth = 2;
+                    ctx.strokeText(superLeft, this.x, this.y - 14);
+                    ctx.fillText(superLeft, this.x, this.y - 14);
+                    ctx.restore();
+                }
+            }
+
+            attack(now) { }
+
+            update(timestamp) {
+                // 1. Aplica SOMENTE a aura de lentidão constantemente
+                for (const enemy of enemies) {
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist <= this.slowAuraRadius) {
+                        enemy.applyEffect('slow', this.slowDuration, { percentage: this.slowPercentage });
+                    }
+                }
+
+                // Use Date.now() para tudo aqui!
+                const now = Date.now();
+
+                const slowFactor = this.getFurySlowFactor();
+
+                if (this.isBuffActive) {
+                    currentCooldown /= 1.5; // 50% mais rápido
+                }
+
+                // 2. Verifica se pode usar o ataque especial
+                if (now - this.lastSpecialAttackTime >= this.specialAttackCooldown * slowFactor) {
+                    this.specialAttack(now);
+                }
+
+                // 3. Evolução passiva: super congelamento
+                if (purchasedEvolutions.gelo && now - this.lastSuper >= 60000 * slowFactor) {
+                    this.lastSuper = now;
+                    for (const enemy of enemies) {
+                        if (Math.hypot(this.x - enemy.x, this.y - enemy.y) <= 200) {
+                            enemy.takeDamage(1400);
+                            enemy.applyEffect("freeze", 3500);
+                        }
+                    }
+                }
+            }
+
+            specialAttack(now) {
+                this.lastSpecialAttackTime = now; // Isso já está correto!
+                createParticleEffect(this.x, this.y, 50, 'white', this.range);
+                for (const enemy of enemies) {
+                    if (enemy instanceof FantasmaEnemy && enemy.isInvisible) continue;
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist <= this.range) {
+                        enemy.takeDamage(this.specialAttackDamage);
+                        enemy.applyEffect('freeze', this.freezeDuration);
+                    }
+                }
+                this.justFired = true;
+            }
+        }
+        class EvolutivaTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.EVOLUTIVA.cost);
+                this.evolutionKey = "evolutiva";
+
+                this.currentStageIndex = 0;
+                this.lastUpdateTime = Date.now();
+                this.evolutionTimePerStage = 300000; // Padrão de 5 minutos
+                this.timeToNextEvo = this.evolutionTimePerStage;
+
+                this.shotCount = 0;
+
+                // Bônus de tempo por morte (em ms), por estágio (índice 0 = estágio 1)
+                this.killReductions = [
+                    150000, // Estágio 1: 2m 30s
+                    60000,  // Estágio 2: 1m
+                    20000,  // Estágio 3: 20s
+                    5000,   // Estágio 4: 5s
+                    5000,   // Estágio 5: 5s
+                    5000    // Estágio 6: 5s
+                ];
+
+                this.STAGES = [
+                    { range: 30, damage: 200, cooldown: 8000, color: '#8B0000', size: 8 },
+                    { range: 60, damage: 300, cooldown: 4000, color: '#FF4500', size: 9 },
+                    { range: 100, damage: 350, cooldown: 1500, color: 'orange', size: 10 },
+                    { range: 160, damage: 450, cooldown: 1000, color: 'yellow', size: 12 },
+                    { range: 180, damage: 580, cooldown: 800, color: '#ADFF2F', size: 14 },
+                    { range: 200, damage: 650, cooldown: 800, color: '#00BFFF', size: 15 }
+                ];
+
+                this.setStage(0); // Configura as estatísticas iniciais
+                // Garante que o primeiro tiro já esteja pronto
+                this.lastShotTime = -this.cooldown;
+
+            }
+
+            setStage(stageIndex) {
+                if (stageIndex >= this.STAGES.length) return;
+                const stage = this.STAGES[stageIndex];
+                this.range = stage.range; this.damage = stage.damage; this.cooldown = stage.cooldown;
+                this.color = stage.color; this.size = stage.size; this.currentStageIndex = stageIndex;
+                console.log(`Torre Evolutiva em [${this.x.toFixed(0)}, ${this.y.toFixed(0)}] chegou ao estágio ${stageIndex + 1}`);
+            }
+
+            // Novo método que é chamado pelo projétil
+            registerKill() {
+                if (this.currentStageIndex >= this.STAGES.length - 1) return; // Não faz nada se já está no estágio máximo
+
+                const reduction = this.killReductions[this.currentStageIndex];
+                this.timeToNextEvo -= reduction;
+                console.log(`Abate! Tempo para evoluir reduzido em ${reduction / 1000}s.`);
+            }
+
+            evolve() {
+                // Lógica de Rollover: guarda o tempo excedente
+                const leftoverTime = -this.timeToNextEvo;
+
+                const nextStage = this.currentStageIndex + 1;
+                if (nextStage < this.STAGES.length) {
+                    this.setStage(nextStage);
+                    // Reseta o cronômetro para o próximo estágio e já aplica o bônus de tempo excedente
+                    this.timeToNextEvo = this.evolutionTimePerStage - leftoverTime;
+                } else {
+                    this.timeToNextEvo = 0; // Travado no estágio máximo
+                }
+            }
+
+            update(timestamp) {
+                // A lógica de ataque padrão
+                super.update(timestamp);
+
+                // Se a torre não está no estágio máximo, seu cronômetro continua
+                if (this.currentStageIndex < this.STAGES.length - 1) {
+                    const now = Date.now();
+                    const deltaTime = now - this.lastUpdateTime;
+                    this.lastUpdateTime = now;
+
+                    this.timeToNextEvo -= deltaTime;
+
+                    // Se o tempo acabar, evolui
+                    if (this.timeToNextEvo <= 0) {
+                        this.evolve();
+                    }
+                }
+            }
+
+            attack(timestamp) {
+                // 1) garante initialização de lastShotTime
+                if (this.lastShotTime === undefined) {
+                    this.lastShotTime = timestamp - this.cooldown;
+                }
+
+                // 2) não dispara sem alvo
+                if (!this.target) return;
+
+                // 3) calcula slowFactor via FuryManaTower (0.3 dentro da aura, 1 fora)
+                const slowFactor = this.getFurySlowFactor();
+
+                // 4) verifica cooldown ajustado; se ainda não passou, sai
+                if (timestamp - this.lastShotTime < this.cooldown * slowFactor) return;
+                this.lastShotTime = timestamp;
+                this.shotCount++;
+                this.justFired = true;
+
+                // 5) calcula baseDamage (já considera estágio atual em this.damage)
+                let baseDmg = this.damage;
+
+                // 6) modo **não** evoluído
+                if (!purchasedEvolutions.evolutiva) {
+                    // aplica buff local ×4
+                    let damageMultiplier = this.isFury ? 4 : 1;
+                    // aplica buff de área ×3
+                    if (slowFactor < 1) damageMultiplier *= 3;
+
+                    const finalDamage = baseDmg * damageMultiplier;
+                    const finalColor = slowFactor < 1 ? 'red' : this.color;
+
+                    projectiles.push(
+                        new Projectile(
+                            this.x, this.y,
+                            finalDamage,   // usa finalDamage
+                            10,             // velocidade
+                            this.target,    // alvo
+                            finalColor,     // cor
+                            0,              // aoeRadius
+                            false,          // isHoming
+                            false,          // isMortar
+                            this,           // firerTower
+                            false,          // isExplosive
+                            false           // isArc
+                        )
+                    );
+                    return;
+                }
+
+                // 7) modo **evoluído**
+                //    (a cada 3º tiro, aplica douplo de dano + freeze)
+                let dmg = baseDmg;
+                if (this.shotCount % 3 === 0) {
+                    dmg *= 2;
+                    this.target.applyEffect("freeze", 800);
+                }
+
+                // também aplica buffs de Fúria no modo evoluído:
+                let evoMultiplier = this.isFury ? 4 : 1;
+                if (slowFactor < 1) evoMultiplier *= 3;
+                const finalDmgEvo = dmg * evoMultiplier;
+                const finalColorEvo = slowFactor < 1 ? 'red' : this.color;
+
+                projectiles.push(
+                    new Projectile(
+                        this.x, this.y,
+                        finalDmgEvo,     // usa finalDmgEvo
+                        10,              // velocidade
+                        this.target,     // alvo
+                        finalColorEvo,   // cor
+                        0,               // aoeRadius
+                        false,           // isHoming
+                        false,           // isMortar
+                        this,            // firerTower
+                        false,           // isExplosive
+                        false            // isArc
+                    )
+                );
+            }
+
+
+            draw() {
+                ctx.fillStyle = this.color; ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+
+                // Desenha o número do estágio
+                ctx.fillStyle = 'white'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(this.currentStageIndex + 1, this.x, this.y);
+
+                // Barra de progresso para a próxima evolução
+                if (this.currentStageIndex < this.STAGES.length - 1) {
+                    const progress = 1 - (this.timeToNextEvo / this.evolutionTimePerStage);
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(this.x - this.size, this.y + this.size + 4, this.size * 2, 5);
+                    ctx.fillStyle = 'purple';
+                    ctx.fillRect(this.x - this.size, this.y + this.size + 4, (this.size * 2) * progress, 5);
+                }
+            }
+        }
+
+        class InfernalTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.INFERNAL.cost);
+                this.range = 110;
+                this.color = 'red';
+                this.minDps = 100;
+                this.medDps = 350;
+                this.maxDps = 15000;
+                this.stage2Time = 5000;
+                this.stage3Time = 10000;
+                this.lastTarget = null;
+                this.lockOnTimestamp = 0;
+                this.evolutionKey = "infernal";
+                this.lastToggle = 0;
+                this.inToasting = false; // Estado do "superaquecimento"
+                this.currentStage = 1;
+            }
+
+            findTarget() {
+                let bestTarget = null;
+                let maxHealth = -1;
+                for (const enemy of enemies) {
+                    if (enemy instanceof FantasmaEnemy && enemy.isInvisible) continue;
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist <= this.range && enemy.health > maxHealth) {
+                        maxHealth = enemy.health;
+                        bestTarget = enemy;
+                    }
+                }
+                this.target = bestTarget;
+            }
+
+            resetCharge(timestamp) {
+                this.lockOnTimestamp = timestamp;
+                console.log("Torre Infernal foi resetada!");
+            }
+
+            update(timestamp) {
+                // 1) Verifica se o alvo ainda é válido; se não, busca um novo
+                const isTargetStillValid =
+                    this.target &&
+                    this.target.health > 0 &&
+                    Math.hypot(this.x - this.target.x, this.y - this.target.y) <= this.range;
+                if (!isTargetStillValid) {
+                    this.findTarget();
+                }
+
+                // 2) Só reseta o lockOnTimestamp quando o alvo REAL muda
+                const previousTarget = this.lastTarget;
+                if (this.target && this.target !== previousTarget) {
+                    this.lockOnTimestamp = timestamp;
+                }
+
+                // 3) Ativa a passiva “Toasting” a cada 60s, durante 10s
+                if (
+                    purchasedEvolutions.infernal &&
+                    timestamp - this.lastToggle >= 60000 &&
+                    this.target
+                ) {
+                    this.lastToggle = timestamp;
+                    this.inToasting = true;
+                    setTimeout(() => {
+                        this.inToasting = false;
+                    }, 10000);
+                }
+
+                const slowFactor = this.getFurySlowFactor();
+
+                // Aplica redução de 70% no lock-on
+                const effectiveStage2 = this.stage2Time * slowFactor;
+                const effectiveStage3 = this.stage3Time * slowFactor;
+
+                // 4) Se houver alvo, calcula lockDuration e DPS
+                if (this.target) {
+                    const lockDuration = timestamp - this.lockOnTimestamp;
+
+                    // 4a) Define o tempo necessário para estágio 3:
+                    //     -  5s se estiver em “Toasting”
+                    //     - 10s caso contrário
+                    const requiredStage3Time = this.inToasting
+                        ? effectiveStage2   // se “toasting”, usa o tempo reduzido
+                        : effectiveStage3;
+
+                    // 4b) Primeiro, calcula o DPS “base” só com lockDuration
+                    let baseDps;
+                    if (lockDuration >= requiredStage3Time) {
+                        baseDps = this.maxDps;
+                    } else if (lockDuration >= this.stage2Time) {
+                        baseDps = this.medDps;
+                    } else {
+                        baseDps = this.minDps;
+                    }
+
+                    // 4c) Define o estágio visual COM BASE no baseDps
+                    if (baseDps >= this.maxDps) {
+                        this.currentStage = 3;
+                    } else if (baseDps >= this.medDps) {
+                        this.currentStage = 2;
+                    } else {
+                        this.currentStage = 1;
+                    }
+
+                    // 4d) Depois, aplica a passiva garantindo pelo menos medDps
+                    let currentDps = baseDps;
+                    if (this.inToasting) {
+                        currentDps = Math.max(currentDps, this.medDps);
+                    }
+
+                    // 4e) Bônus contra inimigos fracos
+                    if (
+                        this.target instanceof NormalEnemy ||
+                        this.target instanceof RapidoEnemy
+                    ) {
+                        currentDps *= 1.2;
+                    }
+
+                    // 4f) Aplica dano por frame
+                    const damagePerFrame = currentDps / 60;
+                    this.target.takeDamage(damagePerFrame);
+                    this.justFired = true;
+
+                } else {
+                    // Se não há alvo, volta ao estágio 1 visual
+                    this.currentStage = 1;
+                }
+
+                // 5) Atualiza lastTarget para as próximas chamadas
+                this.lastTarget = this.target;
+            }
+
+
+            attack(timestamp) { }
+
+            draw() {
+                // Base da torre
+                ctx.fillStyle = '#400000'; ctx.beginPath(); ctx.arc(this.x, this.y, 16, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 10, 0, Math.PI * 2); ctx.fill();
+
+                // --- LASER COM EFEITOS VISUAIS MELHORADOS ---
+                if (this.target) {
+                    const lockDuration = Date.now() - this.lockOnTimestamp;
+
+                    if (this.currentStage === 3) {
+                        ctx.strokeStyle = 'red';
+                        ctx.lineWidth = 9; // Muito mais grosso
+                        ctx.shadowColor = 'red';
+                        ctx.shadowBlur = 20;
+                    } else if (this.currentStage === 2) {
+                        ctx.strokeStyle = 'orange';
+                        ctx.lineWidth = 5; // Mais grosso
+                        ctx.shadowColor = 'orange';
+                        ctx.shadowBlur = 15;
+                    } else {
+                        ctx.strokeStyle = 'yellow';
+                        ctx.lineWidth = 2; // Fino
+                        ctx.shadowColor = 'yellow';
+                        ctx.shadowBlur = 10;
+                    }
+
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.target.x, this.target.y);
+                    ctx.stroke();
+
+                    // Reseta o brilho para não afetar outros elementos
+                    ctx.shadowBlur = 0;
+                }
+                // --- NOVO: Efeito de aura prismática durante o "Toasting" ---
+                if (this.inToasting) {
+                    const hue = (Date.now() / 10) % 360;
+                    ctx.save();
+                    ctx.globalAlpha = 0.6 + Math.abs(Math.sin(Date.now() / 150)) * 0.4;
+                    ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+                    ctx.lineWidth = 4;
+                    ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Adicione estas duas classes junto com as outras classes de torre
+
+        class FabricadoraManaTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.FabricadoraMana.cost); // Busca o custo do TOWER_TYPES
+                this.range = 100;
+                this.damage = 400;
+                this.cooldown = 1000;
+                this.color = 'purple';
+                this.size = 14; // Tamanho para o desenho
+            }
+
+            attack(ts) {
+                if (!this.target || ts - this.lastShotTime < this.cooldown) return;
+                this.lastShotTime = ts;
+
+                mana = Math.min(maxMana, mana + 1); // Gera 1 de mana
+
+                let finalDamage = this.damage * (this.isFury ? 4 : 1);
+                let finalColor = this.color;
+
+
+                // --- LÓGICA DE VERIFICAÇÃO DE BUFF ---
+                for (const tower of towers) {
+                    if (tower instanceof FuryManaTower && tower.isBuffActive && tower.isAllyInRange(this)) {
+                        finalDamage *= 3; // Triplica o dano
+                        finalColor = 'red'; // Projétil fica vermelho para indicar o buff
+                        break; // Encontrou um buff, não precisa procurar mais
+                    }
+                }
+
+                // Cria um projétil visível
+                projectiles.push(
+                    new Projectile(this.x, this.y, finalDamage, 10, this.target, finalColor, 0, false, false, this)
+                );
+                this.justFired = true;
+            }
+
+            // MÉTODO DRAW FALTANTE
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class ColetoraDinheiroTower extends Tower {
+            constructor(x, y) {
+                super(x, y, TOWER_TYPES.ColetoraDinheiro.cost); // Busca o custo do TOWER_TYPES
+                this.range = 100;
+                this.damage = 400;
+                this.cooldown = 1000;
+                this.color = 'gold';
+                this.size = 14; // Tamanho para o desenho
+            }
+
+            attack(ts) {
+                if (!this.target || ts - this.lastShotTime < this.cooldown) return;
+                this.lastShotTime = ts;
+
+                money += 250; // Gera 250 de ouro
+
+                let finalDamage = this.damage * (this.isFury ? 4 : 1);
+                let finalColor = this.color;
+
+
+                // --- LÓGICA DE VERIFICAÇÃO DE BUFF ---
+                for (const tower of towers) {
+                    if (tower instanceof FuryManaTower && tower.isBuffActive && tower.isAllyInRange(this)) {
+                        finalDamage *= 3; // Triplica o dano
+                        finalColor = 'red'; // Projétil fica vermelho para indicar o buff
+                        break; // Encontrou um buff, não precisa procurar mais
+                    }
+                }
+
+                // Cria um projétil visível
+                projectiles.push(
+                    new Projectile(this.x, this.y, finalDamage, 10, this.target, finalColor, 0, false, false, this)
+                );
+                this.justFired = true;
+            }
+
+            // MÉTODO DRAW FALTANTE
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 1) Torre da Fúria — buff em área para torres aliadas
+        // SUBSTITUA SUA CLASSE FuryManaTower POR ESTA
+        class FuryManaTower extends Tower {
+            constructor(x, y) {
+                super(x, y, 40, 'rgb(255,0,0)');
+                this.range = 120;
+                this.color = TOWER_TYPES.FURYMANA.color;
+                this.size = 14;
+                this.buffCooldown = 60000; // 60 segundos de cooldown
+                this.buffDuration = 20000;  // 20 segundos de duração
+                this.lastBuffTime = -this.buffCooldown; // Permite usar a habilidade imediatamente
+                this.isBuffActive = false;
+            }
+
+            attack(timestamp) { /* Esta torre não ataca com projéteis */ }
+
+            update(timestamp) {
+                const now = Date.now();
+
+                // 1. Verifica se pode ativar o buff
+                if (!this.isBuffActive && now - this.lastBuffTime >= this.buffCooldown) {
+                    // Procura por qualquer torre aliada no alcance que tenha um alvo
+                    const allyHasTarget = towers.some(t =>
+                        t !== this && // Não verificar a si mesma
+                        Math.hypot(t.x - this.x, t.y - this.y) <= this.range &&
+                        t.target // Verifica se a torre tem um alvo
+                    );
+
+                    // Se encontrou uma torre aliada com alvo, ativa o buff
+                    if (allyHasTarget) {
+                        this.activateBuff();
+                    }
+                }
+            }
+
+            activateBuff() {
+                this.isBuffActive = true;
+                this.lastBuffTime = Date.now();
+                createParticleEffect(this.x, this.y, 40, this.color, this.range); // Efeito visual
+
+                // Desativa o buff após a duração usando setTimeout (mais simples e seguro)
+                setTimeout(() => {
+                    this.isBuffActive = false;
+                }, this.buffDuration);
+            }
+
+            // Método público que outras torres usarão para verificar o buff
+            isAllyInRange(allyTower) {
+                return Math.hypot(allyTower.x - this.x, allyTower.y - this.y) <= this.range;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Desenha a aura se o buff estiver ativo
+                if (this.isBuffActive) {
+                    const pulse = Math.abs(Math.sin(Date.now() / 200));
+                    ctx.strokeStyle = `rgba(255, 0, 0, ${0.5 + pulse * 0.5})`;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        }
+
+
+        // 2) Torre Shotgun de Mana — múltiplos projéteis e recarga
+        // SUBSTITUA SUA CLASSE ShotgunManaTower POR ESTA
+        class ShotgunManaTower extends Tower {
+            constructor(x, y) {
+                super(x, y, 25);
+                this.range = 130;
+                this.fullDmgRadius = 40;
+                this.color = '#00A2FF';
+                this.size = 14;
+                this.baseAmmo = 6;
+                this.extraAmmo = 4;
+                this.maxAmmo = this.baseAmmo + this.extraAmmo;  // ← define maxAmmo
+                this.ammo = this.baseAmmo;      // máximo de munição extra
+                this.ammo = this.baseAmmo;
+                this.reloadTime = 7000;
+                this.lastReload = 0;
+                this.projectilesPerShot = 10;
+                this.recoil = 0;
+            }
+
+            findTarget() {
+                this.target = null;
+                let best = null;
+                let bestHealth = -Infinity;
+
+                // 1) Primeiro, olha só pros “pesados” a até 60px
+                for (const e of enemies) {
+                    const d = Math.hypot(this.x - e.x, this.y - e.y);
+                    if (
+                        (e instanceof DisruptorEnemy ||
+                            e instanceof TankEnemy ||
+                            e instanceof ChefeEnemy ||
+                            e instanceof ReiEnemy)
+                        && d <= 60
+                    ) {
+                        if (e.health > bestHealth) {
+                            bestHealth = e.health;
+                            best = e;
+                        }
+                    }
+                }
+                if (best) {
+                    this.target = best;
+                    return;
+                }
+
+                // 2) Fallback: inimigos “normais” (não pesados), escolhe o MAIS PRÓXIMO dentro do this.range
+                let closest = null;
+                let minDist = Infinity;
+                for (const e of enemies) {
+                    // pula os “pesados” — assim eles só entram no 1) quando estiverem a ≤ 60px
+                    if (
+                        e instanceof DisruptorEnemy ||
+                        e instanceof TankEnemy ||
+                        e instanceof ChefeEnemy ||
+                        e instanceof ReiEnemy
+                    ) continue;
+
+                    const d = Math.hypot(this.x - e.x, this.y - e.y);
+                    if (d <= this.range && d < minDist) {
+                        minDist = d;
+                        closest = e;
+                    }
+                }
+                this.target = closest;
+            }
+
+            update(timestamp) {
+                // 1) Coice
+                if (this.recoil > 0) this.recoil--;
+
+                // 2) Recarrega munição até maxAmmo
+                if (this.ammo < this.maxAmmo) {
+                    if (!this.lastReload) this.lastReload = timestamp;
+                    if (timestamp - this.lastReload >= this.reloadTime) {
+                        this.ammo++;
+                        this.lastReload = timestamp;
+                    }
+                }
+
+                // 3) Busca alvo com o novo critério
+                this.findTarget();
+
+                // 4) Se tiver munição e alvo válido dentro do range, dispara
+                if (this.ammo > 0 && this.target) {
+                    const dist = Math.hypot(this.target.x - this.x, this.target.y - this.y);
+                    if (dist <= this.range) {
+                        this.fire(this.target, dist);
+                        this.ammo--;
+                        this.recoil = 10;
+                        this.lastReload = timestamp;
+                    }
+                }
+            }
+
+            fire(target, dist) {
+                // 1) Partículas de disparo (efeito visual)
+                createParticleEffect(this.x, this.y, 20, this.color, 20);
+
+                // 2) Ângulo e spread
+                const angleToTarget = Math.atan2(target.y - this.y, target.x - this.x);
+                const maxSpread = Math.PI / 4;
+                const spreadMin = Math.PI / 16;
+                const t = Math.max(dist / this.range, this.fullDmgRadius / this.range);
+                const spread = spreadMin + (maxSpread - spreadMin) * t;
+
+                // 3) Cálculo de falloff (0→1)
+                const falloff = dist <= this.fullDmgRadius
+                    ? 1
+                    : Math.max(0, 1 - ((dist - this.fullDmgRadius) / (this.range - this.fullDmgRadius)));
+
+                // 4) Dano total antes de dividir em pellets
+                let totalDamage = 500 + (5000 - 500) * falloff;
+
+                // 5) Buff local da evolutiva (isFury ×4)
+                if (this.isFury) {
+                    totalDamage *= 4;
+                }
+
+                // 6) Buff de área da Torre da Fúria (×3) e cor vermelha
+                let pelletColor = this.color;
+                for (const tower of towers) {
+                    if (
+                        tower instanceof FuryManaTower &&
+                        tower.isBuffActive &&
+                        tower.isAllyInRange(this)
+                    ) {
+                        totalDamage *= 3;
+                        pelletColor = 'red';
+                        break;
+                    }
+                }
+
+                // 7) Dano por pellet, após todos os buffs
+                const damagePerPellet = totalDamage / this.projectilesPerShot;
+
+                // 8) Gera cada pellet
+                for (let i = 0; i < this.projectilesPerShot; i++) {
+                    const angle = angleToTarget - spread / 2 + Math.random() * spread;
+                    projectiles.push(
+                        new Pellet(
+                            this.x,             // posição X
+                            this.y,             // posição Y
+                            damagePerPellet,    // dano já com buffs
+                            15,                 // velocidade
+                            angle,              // direção
+                            this.range,         // alcance
+                            pelletColor,        // cor (vermelha se buff ativo)
+                            this                // quem disparou
+                        )
+                    );
+                }
+
+                // 9) Marca que disparou
+                this.justFired = true;
+            }
+
+
+
+            draw() {
+                // Efeito de coice visual
+                const angle = this.target ? Math.atan2(this.target.y - this.y, this.target.x - this.x) : 0;
+                const recoilX = this.x - Math.cos(angle) * this.recoil;
+                const recoilY = this.y - Math.sin(angle) * this.recoil;
+
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(recoilX, recoilY, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Desenha a munição restante
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.ammo, recoilX, recoilY);
+            }
+        }
+
+
+        const TOWER_TYPES = {
+            EVOLUTIVA: { name: 'Evolutiva', cost: 300, color: '#8B0000', class: EvolutivaTower }, // <<< ADICIONE ESTA
+            METRALHADORA: { name: 'Metralhadora', cost: 2000, color: 'orange', class: MetralhadoraTower },
+            BALANCEADA: { name: 'Balanceada', cost: 3500, color: 'green', class: BalanceadaTower },
+            MORTEIRO: { name: 'Morteiro', cost: 4000, color: '#8B4513', class: MorteiroTower },
+            GELO: { name: 'Torre de Gelo', cost: 5000, color: 'cyan', class: GeloTower },
+            INFERNAL: { name: 'Infernal', cost: 6500, color: 'red', class: InfernalTower },       // <<< ADICIONE ESTA
+            ELETRO: { name: 'Eletrocutadora', cost: 8000, color: 'blue', class: EletroTower },
+            FabricadoraMana: { name: 'Fabricadora de Mana', cost: 15, color: 'purple', class: FabricadoraManaTower },
+            ColetoraDinheiro: { name: 'Coletora de Dinheiro', cost: 10, color: 'gold', class: ColetoraDinheiroTower },
+            FURYMANA: { name: 'Torre da Fúria', cost: 40, color: 'rgb(255,0,0)', class: FuryManaTower },
+            SHOTGUNMANA: { name: 'Shotgun de Mana', cost: 25, color: '#00A2FF', class: ShotgunManaTower },
+        };
+
+        const EVOLUTIONS = {
+            evolutiva: { name: "Evolutiva", type: "ativa", cost: 30000, color: "#8B0000" },
+            metralhadora: { name: "Metralhadora", type: "passiva", cost: 150000, color: "orange" },
+            balanceada: { name: "Balanceada", type: "ativa", cost: 60000, color: "green" },
+            morteiro: { name: "Morteiro", type: "ativa", cost: 35000, color: "#8B4513" },
+            gelo: { name: "Torre de Gelo", type: "passiva", cost: 250000, color: "cyan" },
+            infernal: { name: "Infernal", type: "passiva", cost: 100000, color: "red" },
+            eletro: { name: "Eletrocutadora", type: "ativa", cost: 50000, color: "blue" },
+        };
+
+        function buyEvolution(key) {
+            const evo = EVOLUTIONS[key];
+            if (!evo) return;
+            if (purchasedEvolutions[key]) return; // já comprada
+            if (money < evo.cost) return; // sem grana
+            money -= evo.cost;
+            purchasedEvolutions[key] = true; // atualiza a variável global
+            sessionStorage.setItem("evolutions", JSON.stringify(purchasedEvolutions));
+            updateUI();
+            setupEvolutionShop(); // atualiza a loja imediatamente
+        }
+
+        let purchasedEvolutions = {};
+
+        class Enemy {
+            constructor(health, speed, value, isGolden = false, isPrismatic = false) {
+                this.x = path[0].x;
+                this.y = path[0].y;
+                this.pathIndex = 0;
+                this.radius = 15;
+                this.isGolden = isGolden;
+                this.isPrismatic = isPrismatic;
+                this.isChallenge = false;
+
+                this.effects = {
+                    mortar_slow: { duration: 0, strength: 0 },
+                    revival_buff: { active: false, expires: 0 },
+                    timed: []
+                };
+
+                const diffMods = DIFFICULTY_SETTINGS[currentDifficulty];
+                let finalHealth = health * diffMods.healthMod;
+                let finalSpeed = speed * diffMods.speedMod;
+                let finalValue = value;
+
+                if (this.isPrismatic) {
+                    finalHealth *= 6; finalValue *= 51;
+                    this.hue = Math.floor(Math.random() * 360);
+                } else if (this.isGolden) {
+                    finalHealth *= 1.30; finalValue *= 6;
+                }
+                if (diffMods.ramp) {
+                    finalHealth *= (1 + Math.min(0.80, Math.floor(insaneRampCounter / 100) * 0.10));
+                }
+
+                this.maxHealth = finalHealth; this.health = this.maxHealth;
+                this.baseSpeed = finalSpeed; this.speed = this.baseSpeed;
+                this.value = finalValue;
+            }
+
+            takeDamage(amount) {
+                const isHypnotized = this.effects.timed.some(e => e.type === 'hypnosis');
+                if (!isHypnotized && this.effects.timed.some(e => e.type === 'freeze')) {
+                    amount *= 2;
+                }
+                this.health -= amount;
+                if (this.health <= 0) {
+                    this.die();
+                }
+            }
+
+            heal(amount) {
+                this.health = Math.min(this.maxHealth, this.health + amount);
+            }
+
+            // MÉTODO 'DIE' CORRIGIDO
+            die() {
+                // --- NOVA LÓGICA DO SURTO DE OURO ---
+                // Verifica se este inimigo morreu dentro de uma poça de "Surto de Ouro"
+                let goldSurgeBonusApplied = false;
+                powerupAuras.forEach(aura => {
+                    // Verifica se a aura é do Surto de Ouro e se o inimigo está dentro dela
+                    if (aura.key === 'goldSurge' && !aura.triggeredEnemies.has(this)) {
+                        const dist = Math.hypot(this.x - aura.x, this.y - aura.y);
+                        if (dist <= aura.radius) {
+                            aura.triggeredEnemies.add(this); // Marca para não dar bônus de novo
+                            goldSurgeBonusApplied = true;
+
+                            mana = Math.min(maxMana, mana + 1);
+
+                            const r = Math.random();
+                            let mult = (r < 0.01) ? 5 : (r < 0.51) ? 3 : 2;
+                            const goldDropped = this.value * mult;
+                            money += goldDropped;
+                            console.log(`SURTO DE OURO: Drop x${mult} = ${goldDropped} moedas e +1 Mana`);
+                        }
+                    }
+                });
+
+                // --- LÓGICA DE MORTE ORIGINAL (continua a mesma) ---
+                if (this.effects.revival_buff.active && Date.now() < this.effects.revival_buff.expires) {
+                    this.health = this.maxHealth;
+                    this.effects.revival_buff.active = false;
+                    createParticleEffect(this.x, this.y, 50, '#0000FF', 25);
+                    return;
+                }
+
+                for (const e of enemies) {
+                    if (e !== this && e.onAllyDeath) {
+                        e.onAllyDeath(this);
+                    }
+                }
+
+                if (!goldSurgeBonusApplied) {
+                    money += this.value;
+                }
+
+                // Drop de mana por tipo de inimigo (continua funcionando)
+                let drop = 0;
+                if (this instanceof FantasmaEnemy || this instanceof DisruptorEnemy || this instanceof MongeEnemy || this instanceof InvocadorEnemy) {
+                    drop = Math.floor(Math.random() * 3) + 1;
+                } else if (this instanceof ReiEnemy || this instanceof TankEnemy) {
+                    drop = Math.floor(Math.random() * 5) + 2;
+                } else if (this instanceof CavaleiroEnemy || this instanceof RapidoEnemy || this instanceof NormalEnemy) {
+                    if (Math.random() < 0.15) drop = 1;
+                } else if (this instanceof ChefeEnemy) {
+                    drop = 10;
+                }
+                mana = Math.min(maxMana, mana + drop);
+
+                createParticleEffect(this.x, this.y, 20, 'gold', 15);
+                const index = enemies.indexOf(this);
+                if (index > -1) {
+                    enemies.splice(index, 1);
+                }
+            }
+
+            applyEffect(type, duration, data = {}) {
+                if (type === 'hypnosis') {
+                    // Todos podem ser hipnotizados, exceto Rei e Chefe
+                    if (this instanceof ReiEnemy) {
+                        // Rei morre imediatamente ao tentar hipnotizar
+                        this.takeDamage(this.health);
+                    } else if (this instanceof ChefeEnemy) {
+                        // Chefe é imune: ignora hipnose
+                    } else {
+                        // Demais inimigos recebem o efeito normalmente
+                        const idx = this.effects.timed.findIndex(e => e.type === 'hypnosis');
+                        if (idx > -1) this.effects.timed.splice(idx, 1);
+                        this.effects.timed.push({ type: 'hypnosis', endTime: Date.now() + duration, ...data });
+                    }
+                    return;
+                }
+
+                if (type === 'revival_buff') {
+                    this.effects.revival_buff.active = true;
+                    this.effects.revival_buff.expires = Date.now() + duration;
+                } else if (type === 'mortar_slow') {
+                    this.effects.mortar_slow.strength = Math.min(0.60, this.effects.mortar_slow.strength + data.amount);
+                    this.effects.mortar_slow.duration = Math.min(18000, this.effects.mortar_slow.duration + 3000 / 60);
+                } else {
+                    const existingEffectIndex = this.effects.timed.findIndex(e => e.type === type);
+                    if (existingEffectIndex > -1) this.effects.timed.splice(existingEffectIndex, 1);
+                    this.effects.timed.push({ type, endTime: Date.now() + duration, ...data });
+                }
+            }
+
+            updateEffects() {
+                const now = Date.now();
+                this.effects.timed = this.effects.timed.filter(effect => effect && effect.endTime > now);
+
+                // VENENO (POISON)
+                // Procura todos os efeitos de poison ativos
+                const poisonEffects = this.effects.timed.filter(e => e.type === 'poison');
+                if (poisonEffects.length > 0) {
+                    // Permite stacks, mas limita pelo maxStacks/maxDps se definido
+                    let totalDps = 0;
+                    let stacks = poisonEffects.length;
+                    let stackBonus = poisonEffects[0].stackBonus || 0;
+                    let maxStacks = poisonEffects[0].maxStacks || 1;
+                    let maxDps = poisonEffects[0].maxDps || 999999;
+
+                    // Calcula DPS total considerando bônus por stack
+                    for (let i = 0; i < poisonEffects.length && i < maxStacks; i++) {
+                        let dps = poisonEffects[i].dps || 0;
+                        dps += i * stackBonus;
+                        totalDps += dps;
+                    }
+                    totalDps = Math.min(totalDps, maxDps);
+
+                    // Aplica dano de veneno por frame
+                    this.takeDamage(totalDps / 60);
+                }
+
+                if (this.effects.mortar_slow.duration > 0) {
+                    this.effects.mortar_slow.duration -= 1000 / 60;
+                } else {
+                    this.effects.mortar_slow.strength = 0;
+                }
+
+                this.speed = this.baseSpeed;
+
+                if (this.effects.mortar_slow.strength > 0) {
+                    this.speed *= (1 - this.effects.mortar_slow.strength);
+                }
+
+                if (this.effects.timed.some(e => e.type === 'freeze')) {
+                    this.speed = 0;
+                    return;
+                }
+
+                const slowEffect = this.effects.timed.find(e => e.type === 'slow');
+                if (slowEffect) {
+                    this.speed *= (1 - slowEffect.percentage);
+                }
+            }
+
+            move() {
+                if (this.pathIndex >= path.length - 1) {
+                    lives--;
+                    this.health = 0; this.die();
+                    return;
+                }
+                const targetPoint = path[this.pathIndex + 1];
+                const dx = targetPoint.x - this.x;
+                const dy = targetPoint.y - this.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance < this.speed) {
+                    this.x = targetPoint.x; this.y = targetPoint.y;
+                    this.pathIndex++;
+                } else {
+                    this.x += (dx / distance) * this.speed;
+                    this.y += (dy / distance) * this.speed;
+                }
+            }
+
+            moveReversed() {
+                if (this.pathIndex <= 0) { this.health = 0; this.die(); return; }
+
+                // O alvo é o início do segmento atual do caminho
+                const targetPoint = path[this.pathIndex];
+                const dx = targetPoint.x - this.x;
+                const dy = targetPoint.y - this.y;
+                const distance = Math.hypot(dx, dy);
+                const moveSpeed = this.baseSpeed;
+
+                if (distance < moveSpeed) {
+                    this.x = targetPoint.x;
+                    this.y = targetPoint.y;
+                    this.pathIndex--; // Chegou ao início do segmento, então decrementa para o anterior
+                } else {
+                    // Move-se para trás ao longo da linha do segmento
+                    this.x += (dx / distance) * moveSpeed;
+                    this.y += (dy / distance) * moveSpeed;
+                }
+            }
+
+            update(timestamp) {
+                // --- LÓGICA DE HIPNOSE CORRIGIDA ---
+                if (this.effects.timed.some(e => e.type === 'hypnosis')) {
+                    this.moveReversed(); // Usa o novo método de movimento
+
+                    // Ataca outros inimigos
+                    for (const target of enemies) {
+                        if (this !== target && !target.effects.timed.some(e => e.type === 'hypnosis') && Math.hypot(this.x - target.x, this.y - target.y) < 25) {
+
+                            // CORREÇÃO: Pega a vida do alvo ANTES do dano
+                            const targetHealthBefore = target.health;
+                            const damageToDeal = this.health;
+
+                            target.takeDamage(damageToDeal);
+                            this.takeDamage(targetHealthBefore);
+                            break;
+                        }
+                    }
+                    return; // Pula a lógica de update normal
+                }
+
+                // Lógica normal
+                this.updateEffects();
+                this.move();
+                if (this.isPrismatic) {
+                    this.hue = (this.hue + 1) % 360;
+                }
+            }
+
+            draw() {
+                if (this.effects.timed.some(e => e.type === 'freeze')) {
+                    ctx.shadowColor = 'cyan';
+                    ctx.shadowBlur = 15;
+                } else if (this.effects.timed.some(e => e.type === 'slow')) {
+                    ctx.shadowColor = 'lightblue';
+                    ctx.shadowBlur = 10;
+                }
+
+                this.drawShape();
+
+                if (this.effects.revival_buff.active && Date.now() < this.effects.revival_buff.expires) {
+                    ctx.shadowColor = '#0000FF';
+                    ctx.shadowBlur = 20;
+                    this.drawShape();
+                }
+
+                ctx.shadowBlur = 0;
+
+                const healthBarYOffset = this.radius + 10;
+                const healthBarWidth = this.radius * 2;
+
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.fillRect(this.x - healthBarWidth / 2, this.y - healthBarYOffset, healthBarWidth, 7);
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.9)';
+                ctx.fillRect(this.x - healthBarWidth / 2, this.y - healthBarYOffset, healthBarWidth * (this.health / this.maxHealth), 7);
+
+                if (this.effects.mortar_slow && this.effects.mortar_slow.strength > 0) {
+                    const debuffBarYOffset = healthBarYOffset + 8;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(this.x - healthBarWidth / 2, this.y - debuffBarYOffset, healthBarWidth, 5);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x - healthBarWidth / 2, this.y - debuffBarYOffset, healthBarWidth * (this.effects.mortar_slow.strength / 0.60), 5);
+                }
+            }
+        }
+
+        class NormalEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) { // Adiciona isPrismatic
+                super(2000, 1.5, 100, isGolden, isPrismatic); // Passa para o pai
+                this.baseColor = 'red';
+            }
+            drawShape() {
+                if (this.isPrismatic) { // Lógica de cor Prismática
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.fillRect(this.x - 10, this.y - 10, 20, 20);
+            }
+        }
+
+        class RapidoEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(400, 4, 50, isGolden, isPrismatic);
+                this.baseColor = 'red';
+            }
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - 10);
+                ctx.lineTo(this.x - 10, this.y + 10);
+                ctx.lineTo(this.x + 10, this.y + 10);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        class DisruptorEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(15000, 0.7, 1000, isGolden, isPrismatic);
+                this.baseColor = 'cyan';
+                this.radius = 18;
+                this.disruptionRadius = 200;
+                this.disruptionCooldown = 4000;
+                this.lastDisruptionTime = 0;
+            }
+
+            update(timestamp) {
+                super.update(timestamp);
+                if (timestamp - this.lastDisruptionTime >= this.disruptionCooldown) {
+                    this.findAndDisruptTower(timestamp);
+                    this.lastDisruptionTime = timestamp;
+                }
+            }
+
+            // --- NOVA LÓGICA DE MIRA PRIORITÁRIA ---
+            findAndDisruptTower(timestamp) {
+                let bestTarget = null;
+                let highestStage = 0; // Começa em 0 para garantir que qualquer torre de estágio 1+ seja um alvo
+
+                // Procura pela Torre Infernal de estágio mais alto dentro do alcance
+                for (const tower of towers) {
+                    // Verifica se é uma Torre Infernal e se está no alcance
+                    if (tower instanceof InfernalTower && Math.hypot(this.x - tower.x, this.y - tower.y) <= this.disruptionRadius) {
+                        // Se a torre atual tiver um estágio maior que o melhor alvo encontrado até agora, ela se torna o novo melhor alvo
+                        if (tower.currentStage > highestStage) {
+                            highestStage = tower.currentStage;
+                            bestTarget = tower;
+                        }
+                    }
+                }
+
+                // Se encontrou um alvo, dispara o projétil disruptor
+                if (bestTarget) {
+                    projectiles.push(new DisruptorProjectile(this.x, this.y, 8, bestTarget, timestamp));
+                }
+            }
+
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.radius);
+                ctx.lineTo(this.x - this.radius, this.y + this.radius);
+                ctx.lineTo(this.x + this.radius, this.y + this.radius);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        class MongeEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(12000, 1.5, 3000, isGolden, isPrismatic);
+                this.baseColor = 'green';
+                this.radius = 16;
+                this.range = 200;
+                this.lastHealTime = 0;
+                this.healCooldown = 800;
+                this.revivalCharges = 2;
+                this.healAmount = this.getHealAmountForDifficulty();
+            }
+            getHealAmountForDifficulty() {
+                switch (currentDifficulty) {
+                    case 'FACIL': return 1300;
+                    case 'MEDIO': return 1500;
+                    case 'DIFICIL': return 1800;
+                    case 'PRO': return 2200;
+                    case 'INSANO': return 4500;
+                    default: return 1500;
+                }
+            }
+            update(timestamp) {
+                super.update(timestamp);
+                let revivalTarget = null;
+                if (this.revivalCharges > 0) {
+                    for (const enemy of enemies) {
+                        if (Math.hypot(this.x - enemy.x, this.y - enemy.y) <= this.range &&
+                            enemy.health / enemy.maxHealth < 0.20 &&
+                            !(enemy instanceof ChefeEnemy) &&
+                            !enemy.effects.revival_buff.active) {
+                            revivalTarget = enemy;
+                            break;
+                        }
+                    }
+                }
+                if (revivalTarget) {
+                    projectiles.push(new RevivalProjectile(this.x, this.y, 8, revivalTarget));
+                    this.revivalCharges--;
+                    return;
+                }
+                const now = Date.now();
+                if (now - this.lastHealTime >= this.healCooldown) {
+                    let healTarget = null;
+                    let maxHealthDeficit = 0;
+                    for (const enemy of enemies) {
+                        if (this === enemy) continue; // Não curar a si mesmo
+                        if (Math.hypot(this.x - enemy.x, this.y - enemy.y) <= this.range) {
+                            const healthDeficit = enemy.maxHealth - enemy.health;
+                            if (healthDeficit > maxHealthDeficit) {
+                                maxHealthDeficit = healthDeficit;
+                                healTarget = enemy;
+                            }
+                        }
+                    }
+                    if (healTarget) {
+                        projectiles.push(new HealingProjectile(this.x, this.y, 10, healTarget, this.healAmount));
+                        this.lastHealTime = now;
+                    }
+                }
+            }
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.radius);
+                ctx.lineTo(this.x - this.radius, this.y + this.radius);
+                ctx.lineTo(this.x + this.radius, this.y + this.radius);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        class TankEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(23000, 0.3, 8000, isGolden, isPrismatic);
+                this.baseColor = 'darkred';
+            }
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - 15);
+                ctx.lineTo(this.x + 15, this.y - 5);
+                ctx.lineTo(this.x + 10, this.y + 15);
+                ctx.lineTo(this.x - 10, this.y + 15);
+                ctx.lineTo(this.x - 15, this.y - 5);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        class InvocadorEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(4000, 0.8, 500, isGolden, isPrismatic);
+                this.lastSummonTime = 0;
+                this.summonCooldown = 8000;
+                this.baseColor = 'purple';
+            }
+
+            update() {
+                super.update();
+                const now = Date.now();
+                if (now - this.lastSummonTime > this.summonCooldown) {
+                    this.lastSummonTime = now;
+                    this.summon();
+                }
+            }
+
+            summon() {
+                for (let i = 0; i < 4; i++) {
+                    // Cria o inimigo rápido com as mesmas qualidades
+                    const newEnemy = new RapidoEnemy(this.isGolden, this.isPrismatic);
+
+                    // Posiciona perto do invocador
+                    newEnemy.x = this.x + (Math.random() - 0.5) * 40;
+                    newEnemy.y = this.y + (Math.random() - 0.5) * 40;
+                    newEnemy.pathIndex = this.pathIndex;
+
+                    // Se o invocador está sob efeito de hipnose, transfere o efeito
+                    const hypo = this.effects.timed.find(e => e.type === 'hypnosis');
+                    if (hypo) {
+                        // Calcula tempo restante de hipnose
+                        const remaining = Math.max(0, hypo.endTime - Date.now());
+                        newEnemy.applyEffect('hypnosis', remaining);
+                    }
+
+                    enemies.push(newEnemy);
+                }
+            }
+
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class CavaleiroEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(5000, 1.5, 25, isGolden, isPrismatic);
+                this.baseColor = '#00FF09';
+            }
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.fillRect(this.x - 10, this.y - 10, 20, 20);
+            }
+        }
+
+        class ReiEnemy extends Enemy {
+            constructor(isGolden = false, isPrismatic = false) {
+                super(30000, 0.3, 8000, isGolden, isPrismatic);
+                this.baseColor = '#003CFF';
+                this.radius = 22;
+                this.lastSummonTime = Date.now();
+                this.summonCooldown = 10000;
+                this.healthThresholds = [0.8, 0.6, 0.4, 0.2];
+            }
+
+            // Método para invocar os cavaleiros
+            summonKnights(count) {
+                console.log(`Rei está invocando ${count} cavaleiros!`);
+                for (let i = 0; i < count; i++) {
+                    // Se o Rei é dourado, seus cavaleiros também são
+                    const newKnight = new CavaleiroEnemy(this.isGolden);
+
+                    // Posiciona o cavaleiro perto do Rei
+                    newKnight.x = this.x + (Math.random() - 0.5) * 50;
+                    newKnight.y = this.y + (Math.random() - 0.5) * 50;
+                    newKnight.pathIndex = this.pathIndex; // Começa do mesmo ponto no caminho
+
+                    enemies.push(newKnight);
+                }
+            }
+
+            // Sobrescrevemos o takeDamage para verificar os portais de vida
+            takeDamage(amount) {
+                const healthPercentBefore = this.health / this.maxHealth;
+                super.takeDamage(amount); // Aplica o dano
+                const healthPercentAfter = this.health / this.maxHealth;
+
+                // Verifica se algum portal de vida foi cruzado
+                for (let i = this.healthThresholds.length - 1; i >= 0; i--) {
+                    const threshold = this.healthThresholds[i];
+                    if (healthPercentBefore > threshold && healthPercentAfter <= threshold) {
+                        this.summonKnights(2);
+                        this.healthThresholds.splice(i, 1); // Remove o portal para não ser usado de novo
+                    }
+                }
+            }
+
+            update(timestamp) {
+                super.update(timestamp); // Movimento e outros efeitos
+
+                // Lógica da invocação por tempo
+                const now = Date.now();
+                if (now - this.lastSummonTime >= this.summonCooldown) {
+                    this.summonKnights(2);
+                    this.lastSummonTime = now;
+                }
+            }
+
+            drawShape() {
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.baseColor;
+                }
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    const x_i = this.x + this.radius * Math.cos(angle);
+                    const y_i = this.y + this.radius * Math.sin(angle);
+                    if (i === 0) {
+                        ctx.moveTo(x_i, y_i);
+                    } else {
+                        ctx.lineTo(x_i, y_i);
+                    }
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        class FantasmaEnemy extends Enemy {
+            /**
+             * @param {boolean} isGolden — se deve nascer dourado
+             */
+            constructor(isGolden = false, isPrismatic = false) {
+                super(4500, 0.35, 500, isGolden, isPrismatic);
+                this.baseSpeed = this.speed;  // guarda a velocidade original
+                this.shapeColor = '#0011FF';
+                this.auraColor = 'cyan';
+                this.spawnTime = Date.now();
+                this.baseRadius = 15;
+                this.killNearby = 0;
+                this.usedReactivation = false;
+
+                const invisDuration = this.isPrismatic
+                    ? 25000
+                    : (this.isGolden ? 15000 : 10000);
+                this.intangibleUntil = this.spawnTime + invisDuration;
+            }
+
+            get isInvisible() {
+                return Date.now() < this.intangibleUntil;
+            }
+
+            activateInvisibility() {
+                if (this.usedReactivation) return;
+                const invisDuration = this.isPrismatic ? 25000 : (this.isGolden ? 15000 : 10000);
+                this.intangibleUntil = Date.now() + invisDuration;
+                this.usedReactivation = true;
+            }
+
+            // Sobrescrevemos o updateEffects para ter uma lógica de velocidade especial
+            updateEffects() {
+                super.updateEffects(); // Chama a lógica original (para lentidão, veneno, etc.)
+
+                // DEPOIS de chamar a lógica original, aplicamos nosso buff de velocidade se invisível
+                if (this.isInvisible) {
+                    const speedBuff = this.isPrismatic ? 1.25 : (this.isGolden ? 1.20 : 1);
+                    // Multiplicamos pela velocidade ATUAL, que já pode ter sido reduzida por lentidão
+                    this.speed *= speedBuff;
+                }
+            }
+
+            takeDamage(amount) {
+                if (this.isInvisible) return;
+                super.takeDamage(amount);
+            }
+
+            drawShape() {
+                const now = Date.now();
+                const alpha = this.isInvisible ? 0.2 : 1.0;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                if (this.isPrismatic) {
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                } else {
+                    ctx.fillStyle = this.isGolden ? 'gold' : this.shapeColor;
+                }
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.baseRadius);
+                ctx.lineTo(this.x + this.baseRadius, this.y);
+                ctx.lineTo(this.x, this.y + this.baseRadius);
+                ctx.lineTo(this.x - this.baseRadius, this.y);
+                ctx.closePath();
+                ctx.fill();
+                if (this.isInvisible) {
+                    ctx.shadowColor = this.auraColor;
+                    ctx.shadowBlur = 20;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                ctx.restore();
+            }
+
+            draw(timestamp) {
+                // chama o draw padrão (efeitos e barra de vida)
+                super.draw();
+
+                // desenha barra de recarga se ainda não usou
+                if (!this.usedReactivation) {
+                    const barW = this.baseRadius * 2;
+                    const barH = 4;
+                    const bx = this.x - this.baseRadius;
+                    const by = this.y + this.baseRadius + 6;
+                    // fundo
+                    ctx.fillStyle = 'rgba(200,200,200,0.5)';
+                    ctx.fillRect(bx, by, barW, barH);
+                    // progresso
+                    const prog = Math.min(this.killNearby / 10, 1);
+                    ctx.fillStyle = 'cyan';
+                    ctx.fillRect(bx, by, barW * prog, barH);
+                }
+            }
+        }
+
+
+
+        class ChefeEnemy extends Enemy {
+            constructor(spawnCount) {
+                const BASE_HEALTH = 60000;
+                const BASE_SPEED = 0.3;
+                const BASE_VALUE = 20000;
+
+                // 1) Calcule primeiro o bônus de ramp normal
+                const healthBonus = Math.min(spawnCount * 0.10, 0.50);
+                let finalHealth = BASE_HEALTH * (1 + healthBonus);
+
+                const speedBonus = Math.min(spawnCount * 0.05, 0.25);
+                const finalSpeed = BASE_SPEED * (1 + speedBonus);
+
+                // 2) Se for modo Cruel, guarde localmente quanto foi roubado
+                let stolen = 0;
+                if (DIFFICULTY_SETTINGS[currentDifficulty].isCruel) {
+                    stolen = money;    // captura o que o jogador tinha
+                    money = 0;         // zera o money do jogador
+                    finalHealth += stolen;  // +1 HP por moeda roubada
+                    console.log(`MODO CRUEL: Chefe roubou ${stolen} moedas e as converteu em vida!`);
+                }
+
+                // 3) Agora chame super COM OS VALORES já prontos (sem usar this)
+                super(finalHealth, finalSpeed, BASE_VALUE);
+
+                // 4) Só agora posso usar this para guardar o que foi roubado
+                this.stolenMoney = stolen;
+                this.hue = 0;
+                this.spawnCount = spawnCount;
+            }
+
+            // Sobrescreve o método 'die' para devolver o dinheiro
+            die() {
+                if (this.stolenMoney > 0) {
+                    money += this.stolenMoney;
+                    console.log(`O Chefe foi derrotado e devolveu ${this.stolenMoney} moedas!`);
+                }
+                super.die();
+
+                // --- LÓGICA DE "ZEROU O GAME" ---
+                // Só executa se for o 3º chefe (spawnCount === 2) e modo cruel/insano
+                if (
+                    (currentDifficulty === 'CRUEL' || currentDifficulty === 'INSANO') &&
+                    this.spawnCount === 2 && // 3º chefe (começa do zero)
+                    !window.bossFinalDerrotado
+                ) {
+                    window.bossFinalDerrotado = true; // Evita múltiplas execuções
+
+                    // Mostra o botão de vídeo especial
+                    const videoBtn = document.getElementById('video-btn');
+                    if (videoBtn) {
+                        videoBtn.style.display = 'block';
+                        videoBtn.onclick = () => {
+                            window.open('https://www.youtube.com/watch?v=ccFpX4ywPlk', '_blank');
+                        };
+                    }
+
+                    // Exibe alerta de vitória
+                    const continuar = confirm("🎉 Parabéns! Você zerou o game!\nDeseja continuar jogando esta fase? \n se quiser ver o video especial ou continuar clique ok");
+                    if (!continuar) {
+                        location.reload();
+                    }
+                }
+            }
+
+            update() {
+                super.update();
+                this.hue = (this.hue + 1) % 360;
+            }
+
+            drawShape() {
+                // Aumenta o tamanho visual do chefe um pouco a cada spawn
+                const visualScale = 1 + (this.spawnCount * 0.05);
+                ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 30 * visualScale, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const ENEMY_TYPES = {
+            NORMAL: { name: 'Normal', class: NormalEnemy },
+            RAPIDO: { name: 'Rápido', class: RapidoEnemy },
+            TANK: { name: 'Tank', class: TankEnemy },
+            INVOCADOR: { name: 'Invocador', class: InvocadorEnemy },
+            DISRUPTOR: { name: 'Disruptor', class: DisruptorEnemy },
+            FANTASMA: { name: 'Fantasma', class: FantasmaEnemy },
+            REI: { name: 'Rei', class: ReiEnemy },
+            MONGE: { name: 'Monge', class: MongeEnemy },
+            CHEFE: { name: 'Chefe', class: ChefeEnemy },
+        };
+
+        function distance(x1, y1, x2, y2) {
+            const dx = x1 - x2;
+            const dy = y1 - y2;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function selectSpecialTower(key) {
+            // limpa seleção de power-up se houver
+            selectedPowerup = null;
+            // seleciona a torre especial igual às demais
+            document.querySelectorAll('.tower-button').forEach(b => b.classList.remove('selected'));
+            // opcional: destacar visualmente o botão especial
+            document.getElementById(`btn-${key.toLowerCase()}`).classList.add('selected');
+            selectedTower = key;
+        }
+
+        function tryUsePowerup(key, x, y) {
+            const pu = POWERUPS[key];
+            if (!pu.canActivate()) return alert('Em cooldown!');
+            if (game.gold < pu.costGold || game.mana < pu.costMana)
+                return alert('Recursos insuficientes!');
+            game.gold -= pu.costGold;
+            game.mana -= pu.costMana;
+            return pu.activate(x, y);
+        }
+
+        // SUBSTITUA SUA CLASSE PROJECTILE INTEIRA POR ESTA
+        class Projectile {
+            // A correção está nesta linha, adicionando 'firerTower = null'
+            constructor(
+                x, y, damage, speed,
+                target, color, aoeRadius = 0,
+                isHoming = false,
+                isMortar = false,
+                firerTower = null,
+                isExplosive = false,
+                isArc = false
+
+
+            ) {
+
+                console.log(
+                    `%c[Projectile] fired by: %c${firerTower?.constructor.name}%c ` +
+                    `buffActive: %c${firerTower?.isBuffActive}`,
+                    'color:gray',    // prefixo cinza
+                    'color:blue',    // nome da torre em azul
+                    'color:gray',    // texto intermediário cinza
+                    'color:orange'   // estado do buff em laranja
+                );
+
+                this.x = x; this.y = y; this.damage = damage; this.speed = speed;
+                this.target = target; this.color = color; this.aoeRadius = aoeRadius;
+                this.isHoming = isHoming; this.isMortar = isMortar; this.firerTower = firerTower;
+                this.isExplosive = isExplosive; this.isArc = isArc;
+
+                // CORREÇÃO 1: Prepara a trajetória para QUALQUER tiro de morteiro
+                if (this.isMortar) {
+                    this.startX = x;
+                    this.startY = y;
+                    this.targetX = target.x;
+                    this.targetY = target.y;
+                    this.progress = 0;
+                    // O tempo de viagem pode ser ajustado para o tiro teleguiado
+                    const travelDistance = Math.hypot(this.targetX - this.startX, this.targetY - this.startY);
+                    this.totalTravelTime = travelDistance / (this.isHoming ? this.speed * 2 : this.speed);
+                }
+            }
+
+            update(timestamp) {
+                if (this.isMortar && this.isArc) {
+                    this.progress += 0.02; // Velocidade do arco
+                    const dx = this.targetX - this.startX;
+                    const dy = this.targetY - this.startY;
+                    this.x = this.startX + dx * this.progress;
+                    this.y = this.startY + dy * this.progress - Math.sin(this.progress * Math.PI) * 100;
+
+                    if (this.progress >= 1) {
+                        this.hit();
+                    }
+                }
+                // Comportamento 2: Teleguiado (para todas as outras torres E o 3º tiro do morteiro)
+                else {
+                    if (!this.target || this.target.health <= 0) {
+                        this.destroy();
+                        return;
+                    }
+                    // Persegue a posição atual do alvo a cada frame
+                    const dx = this.target.x - this.x;
+                    const dy = this.target.y - this.y;
+                    const distance = Math.hypot(dx, dy);
+
+                    if (distance < this.speed) {
+                        this.hit();
+                    } else {
+                        this.x += (dx / distance) * this.speed;
+                        this.y += (dy / distance) * this.speed;
+                    }
+                }
+            }
+
+            hit() {
+                let hitX = this.x;
+                let hitY = this.y;
+
+                if (this.firerTower?.isBuffActive) {
+                    const manaGain = isMortar ? 4 : 1;
+                    console.log(`→ adicionando ${manaGain} mana`);
+                    mana += manaGain;
+                }
+
+                if (this.aoeRadius > 0) {
+                    // AOE existente
+                    enemies.forEach(enemy => {
+                        if (distance(this.x, this.y, enemy.x, enemy.y) <= this.aoeRadius) {
+                            enemy.takeDamage(this.damage);
+                            if (enemy.health <= 0 && this.firerTower?.registerKill) {
+                                this.firerTower.registerKill();
+                            }
+                        }
+                    });
+                }
+                else {
+                    // ⭐ NOVO: dano direto para projéteis sem AOE e sem ser mortar
+                    if (this.target && this.target.health > 0) {
+                        this.target.takeDamage(this.damage);
+                        if (this.target.health <= 0 && this.firerTower?.registerKill) {
+                            this.firerTower.registerKill();
+                        }
+                    }
+                }
+
+                // Lógica de poça de mortar permanece
+                if (this.isMortar) {
+                    puddles.push(new MortarPuddle(hitX, hitY));
+                }
+
+
+                // 🛠️ NOVA LÓGICA DE POÇA PARA MORTEIRO
+                if (this.isMortar) {
+                    puddles.push(new MortarPuddle(hitX, hitY));
+                }
+                this.destroy();
+            }
+
+            destroy() {
+                const index = projectiles.indexOf(this);
+                if (index > -1) projectiles.splice(index, 1);
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Pellet {
+            constructor(x, y, damage, speed, angle, range, shooter) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.damage = damage;
+                this.speed = speed;           // ← guardei speed
+                this.range = range;
+                this.distanceTraveled = 0;    // ← mesmo nome usado no update
+                this.shooter = shooter;       // referência à torre
+            }
+
+            update() {
+                // Move o projétil
+                this.x += this.vx;
+                this.y += this.vy;
+                this.distanceTraveled += this.speed;
+
+                // Se passou do alcance, destroi
+                if (this.distanceTraveled >= this.range) {
+                    this.destroy();
+                    return;
+                }
+
+                // Verifica colisão com inimigos
+                for (const enemy of enemies) {
+                    if (enemy instanceof FantasmaEnemy && enemy.isInvisible) continue;
+
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist < enemy.radius) {
+                        // Aplica dano
+                        enemy.takeDamage(this.damage);
+
+                        // Se matou, dá munição extra à torre
+                        if (enemy.health <= 0 && this.shooter instanceof ShotgunManaTower) {
+                            const tower = this.shooter;
+                            const maxTotal = tower.baseAmmo + tower.extraAmmo;
+                            tower.ammo = Math.min(maxTotal, tower.ammo + 2);
+                        }
+
+                        // Só então destrói o pellet
+                        this.destroy();
+                        return;
+                    }
+                }
+            }
+
+            destroy() {
+                const i = projectiles.indexOf(this);
+                if (i > -1) projectiles.splice(i, 1);
+            }
+
+            draw() {
+                ctx.fillStyle = '#FFA500';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+
+        class HealingProjectile {
+            constructor(x, y, speed, target, healAmount) {
+                this.x = x; this.y = y; this.speed = speed;
+                this.target = target;
+                this.healAmount = healAmount;
+                this.color = 'lime';
+            }
+            update() {
+                if (!this.target || this.target.health <= 0) { this.destroy(); return; }
+                const dx = this.target.x - this.x; const dy = this.target.y - this.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance < this.speed) { this.hit(); } else { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; }
+            }
+            hit() {
+                if (this.target) {
+                    this.target.heal(this.healAmount);
+                    createParticleEffect(this.target.x, this.target.y, 10, 'lime', 8);
+                }
+                this.destroy();
+            }
+            destroy() { const index = projectiles.indexOf(this); if (index > -1) projectiles.splice(index, 1); }
+            draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI * 2); ctx.fill(); }
+        }
+
+        class RevivalProjectile {
+            constructor(x, y, speed, target) {
+                this.x = x; this.y = y; this.speed = speed;
+                this.target = target;
+                this.color = '#0000FF'; // Azul
+            }
+            update() {
+                if (!this.target || this.target.health <= 0) { this.destroy(); return; }
+                const dx = this.target.x - this.x; const dy = this.target.y - this.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance < this.speed) { this.hit(); } else { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; }
+            }
+            hit() {
+                if (this.target) {
+                    this.target.applyEffect('revival_buff', 4000); // Aplica buff de 4 segundos
+                    createParticleEffect(this.target.x, this.target.y, 20, this.color, 15);
+                }
+                this.destroy();
+            }
+            destroy() { const index = projectiles.indexOf(this); if (index > -1) projectiles.splice(index, 1); }
+            draw() { ctx.fillStyle = this.color; ctx.shadowColor = this.color; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(this.x, this.y, 7, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+        }
+
+        class DisruptorProjectile {
+            constructor(x, y, speed, targetTower, timestamp) {
+                this.x = x;
+                this.y = y;
+                this.speed = speed;
+                this.target = targetTower;
+                this.timestamp = timestamp; // Carrega o timestamp para passar para o método de reset
+                this.color = 'cyan';
+            }
+
+            update() {
+                const dx = this.target.x - this.x;
+                const dy = this.target.y - this.y;
+                const distance = Math.hypot(dx, dy);
+
+                if (distance < this.speed) {
+                    this.hit();
+                } else {
+                    this.x += (dx / distance) * this.speed;
+                    this.y += (dy / distance) * this.speed;
+                }
+            }
+
+            hit() {
+                // Chama o novo método na Torre Infernal para resetá-la
+                this.target.resetCharge(this.timestamp);
+                createParticleEffect(this.target.x, this.target.y, 40, 'cyan', 25);
+                this.destroy();
+            }
+
+            destroy() {
+                const index = projectiles.indexOf(this);
+                if (index > -1) projectiles.splice(index, 1);
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, size, life) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = size;
+                this.initialLife = life;
+                this.life = life;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life / this.initialLife;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        class MortarPuddle {
+            constructor(x, y, duration = 3000, radius = 50, color = 'rgba(139, 69, 19, 0.5)') {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.creationTime = Date.now();
+                this.duration = duration;
+                this.color = color;
+                this.isPoison = (color === 'rgba(50, 205, 50, 0.5)'); // Flag para saber se é veneno
+            }
+
+            update(timestamp) {
+                for (const enemy of enemies) {
+                    const distance = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (distance <= this.radius) {
+                        if (this.isPoison) {
+                            // Se for uma poça de veneno, causa dano por segundo
+                            const dps = 300 + Math.floor((Date.now() - this.creationTime) / 3000) * 300;
+                            enemy.takeDamage(Math.min(dps, 2100) / 60);
+                        } else {
+                            // Se for uma poça de morteiro, aplica lentidão
+                            enemy.applyEffect('mortar_slow', 100, { amount: 0.1 / 60 });
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                const timeSinceCreation = Date.now() - this.creationTime;
+                const alpha = 1 - (timeSinceCreation / this.duration); // Efeito de fade out
+
+                ctx.globalAlpha = Math.max(0, alpha * 0.5); // Garante que alpha não seja negativo
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        // SUBSTITUA SUA CLASSE GoldSurgePuddle POR ESTA
+        class GoldSurgePuddle {
+            constructor(x, y, radius, duration) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.expiresAt = Date.now() + duration;
+                this.triggeredEnemies = new Set();
+            }
+
+            // A poça do Surto de Ouro não precisa de update, pois a lógica está no die() do inimigo
+            update() { }
+
+            // MÉTODO DRAW QUE ESTAVA FALTANDO
+            draw() {
+                const timeLeft = this.expiresAt - Date.now();
+                if (timeLeft <= 0) return;
+
+                const pulse = Math.abs(Math.sin(Date.now() / 300));
+                ctx.save();
+                ctx.globalAlpha = 0.15 + pulse * 0.15; // Aura sutil e pulsante
+                ctx.fillStyle = 'gold';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- Funções do Jogo ---
+
+        function createParticleEffect(x, y, count, color, radius) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color, Math.random() * radius / 10, Math.random() * 30 + 20));
+            }
+        }
+
+        function spawnEnemy() {
+            // Mecânicas de dificuldade e contadores
+            if (currentDifficulty === 'FACIL' && totalEnemiesSpawned >= 250) {
+                currentDifficulty = 'MEDIO';
+                console.log("Atenção! A dificuldade aumentou para MÉDIO!");
+            }
+            tankSpawnCounter++;
+            totalEnemiesSpawned++;
+            if (DIFFICULTY_SETTINGS[currentDifficulty].ramp) {
+                insaneRampCounter++;
+            }
+
+            // --- PRIORIDADE MÁXIMA: CHEFE ---
+            if (totalEnemiesSpawned > 0 && totalEnemiesSpawned % 200 === 0) {
+                enemies.push(new ChefeEnemy(bossSpawnCount));
+                bossSpawnCount++;
+                return; // Inimigo especial spawnado, sai da função
+            }
+
+            // --- NOVA LÓGICA DE SPAWN DO REI (PRIORIDADE 2) ---
+            if (totalEnemiesSpawned > 0 && totalEnemiesSpawned % 90 === 0) {
+                let isPrismatic = false, isGolden = false;
+                if (Math.random() < 0.01) {
+                    isPrismatic = true;
+                } else if (Math.random() < 0.2) {
+                    isGolden = true;
+                }
+                enemies.push(new ReiEnemy(isGolden, isPrismatic));
+                return; // Inimigo especial spawnado, sai da função
+            }
+
+            // Fantasma
+            if (totalEnemiesSpawned > 0 && totalEnemiesSpawned % 55 === 0) {
+                let isPrismatic = false, isGolden = false;
+                const rand = Math.random();
+
+                if (currentDifficulty === 'CRUEL') {
+                    // No modo Cruel: 5% prismático, 35% dourado, 60% normal
+                    if (rand < 0.05) {
+                        isPrismatic = true;
+                    } else if (rand < 0.05 + 0.35) {
+                        isGolden = true;
+                    }
+                } else {
+                    // Probabilidades padrão: 1% prismático, 20% dourado, 79% normal
+                    if (rand < 0.01) {
+                        isPrismatic = true;
+                    } else if (rand < 0.01 + 0.20) {
+                        isGolden = true;
+                    }
+                }
+
+                enemies.push(new FantasmaEnemy(isGolden, isPrismatic));
+            }
+
+            // Disruptor
+            if (Math.random() < 0.15 && totalEnemiesSpawned > 50) {
+                let isPrismatic = false, isGolden = false;
+                if (Math.random() < 0.01) {
+                    isPrismatic = true;
+                } else if (Math.random() < 0.2) {
+                    isGolden = true;
+                }
+                enemies.push(new DisruptorEnemy(isGolden, isPrismatic));
+                return;
+            }
+
+            // Monge
+            if (Math.random() < 0.10 && totalEnemiesSpawned > 120) {
+                let isPrismatic = false, isGolden = false;
+                if (Math.random() < 0.01) {
+                    isPrismatic = true;
+                } else if (Math.random() < 0.2) {
+                    isGolden = true;
+                }
+                enemies.push(new MongeEnemy(isGolden, isPrismatic));
+                return;
+            }
+
+            // --- SPAWN DE INIMIGOS NORMAIS ---
+            let isPrismatic = false, isGolden = false;
+            if (Math.random() < 0.01) {
+                isPrismatic = true;
+            } else if (Math.random() < 0.2) {
+                isGolden = true;
+            }
+
+            if (tankSpawnCounter >= 70) {
+                enemies.push(new TankEnemy(isGolden, isPrismatic));
+                tankSpawnCounter = 0;
+                return;
+            }
+
+            const random = Math.random();
+            if (random < 0.1 && totalEnemiesSpawned > 20) {
+                enemies.push(new InvocadorEnemy(isGolden, isPrismatic));
+            } else if (random < 0.4) {
+                enemies.push(new RapidoEnemy(isGolden, isPrismatic));
+            } else {
+                enemies.push(new NormalEnemy(isGolden, isPrismatic));
+            }
+        }
+
+        // --- Presente de leitura do tutorial? ---
+        if (sessionStorage.getItem('viuAsInformacoes') === 'true') {
+            console.log('Tutorial lido — adicionando torres grátis!');
+
+            // Posições iniciais à escolha: aqui dois exemplos
+            const pos1 = { x: 100, y: 500 };  // canto inferior esquerdo
+            const pos2 = { x: 200, y: 500 };  // logo ao lado
+
+            // Cria e dá custo ZERO a cada torre
+            const freeMetralhadora = new MetralhadoraTower(pos1.x, pos1.y);
+            freeMetralhadora.cost = 0;
+            towers.push(freeMetralhadora);
+
+            const freeEvolutiva = new EvolutivaTower(pos2.x, pos2.y);
+            freeEvolutiva.cost = 0;
+            towers.push(freeEvolutiva);
+        }
+
+
+        // Função para iniciar um Desafio
+        function startChallenge() {
+            const now = Date.now();
+            if (now < challenge.nextAvailable) return;      // no cooldown
+            // gera array de “tipos” conforme stage atual
+            const cfg = challenge.base;
+            const inc = challenge.inc;
+            const s = challenge.stage;
+            const counts = {
+                rapidos: cfg.rapidos + inc.rapidos * s,
+                normais: cfg.normais + inc.normais * s,
+                disruptores: cfg.disruptores + inc.disruptores * s,
+                tanks: cfg.tanks + inc.tanks * s,
+                invocadores: cfg.invocadores + inc.invocadores * s,
+                fantasmas: cfg.fantasmas + inc.fantasmas * s,
+                chefes: cfg.chefes + inc.chefes * s,
+            };
+            // monta fila de spawn
+            challenge.queue = [];
+            for (let i = 0; i < counts.rapidos; i++)   challenge.queue.push(() => new RapidoEnemy(false));
+            for (let i = 0; i < counts.normais; i++)   challenge.queue.push(() => new NormalEnemy(false));
+            for (let i = 0; i < counts.disruptores; i++) challenge.queue.push(() => new DisruptorEnemy(false));
+            for (let i = 0; i < counts.tanks; i++)     challenge.queue.push(() => new TankEnemy(false));
+            for (let i = 0; i < counts.invocadores; i++)challenge.queue.push(() => new InvocadorEnemy(false));
+            for (let i = 0; i < counts.fantasmas; i++) challenge.queue.push(() => new FantasmaEnemy(false));
+            for (let i = 0; i < counts.chefes; i++)    challenge.queue.push(() => new ChefeEnemy(bossSpawnCount++));
+
+            challenge.active = challenge.queue.length;
+            challenge.stage++;
+            challenge.nextAvailable = now + challenge.cooldown;
+            updateChallengeButton();
+
+            // spawna a cada 0.5s
+            const interval = setInterval(() => {
+                if (challenge.queue.length === 0) {
+                    clearInterval(interval);
+                    return;
+                }
+                // escolhe aleatório e spawn
+                const idx = Math.floor(Math.random() * challenge.queue.length);
+                const factory = challenge.queue.splice(idx, 1)[0];
+                const enemy = factory();
+                // aplica +500% de vida
+                enemy.maxHealth *= 5;
+                enemy.health = enemy.maxHealth;
+                enemy.baseSpeed *= DIFFICULTY_SETTINGS[currentDifficulty].speedMod;
+                // no modo INSANO leva +10% extra
+                if (currentDifficulty === 'INSANO') {
+                    enemy.maxHealth *= 1.10;
+                    enemy.health = enemy.maxHealth;
+                }
+                enemy.isChallenge = true;  // flag para não contar em totalEnemiesSpawned
+                enemies.push(enemy);
+            }, 500);
+        }
+
+        // Atualiza estado do botão + barra
+        function updateChallengeButton() {
+            const btn = document.getElementById('challenge-btn');
+            const bar = document.getElementById('challenge-cooldown-bar');
+            const now = Date.now();
+            if (now < challenge.nextAvailable) {
+                btn.disabled = true;
+                const pct = (challenge.nextAvailable - now) / challenge.cooldown * 100;
+                bar.style.width = `${pct}%`;
+                requestAnimationFrame(updateChallengeButton);
+            } else {
+                btn.disabled = false;
+                bar.style.width = '0%';
+            }
+        }
+
+        // Reward quando todos morrerem
+        const originalDie = Enemy.prototype.die;
+        Enemy.prototype.die = function () {
+            // chama lógica original
+            originalDie.call(this);
+            if (this.isChallenge) {
+                challenge.active--;
+                if (challenge.active === 0) {
+                    lives += 5;
+                }
+            }
+        };
+        function selectTower(key, btn) {
+            // desmarca todos
+            document.querySelectorAll('.tower-button').forEach(b => b.classList.remove('selected'));
+
+            if (selectedTower === key) {
+                // se já estava selecionada, cancela
+                selectedTower = null;
+            } else {
+                // marca só este
+                btn.classList.add('selected');
+                selectedTower = key;
+            }
+        }
+
+
+        function updateUI() {
+            document.getElementById('money').textContent = `Moedas: ${money}`;
+            document.getElementById('lives').textContent = `Vidas: ${lives}`;
+            document.getElementById('wave').textContent = `Inimigos Spawnados: ${totalEnemiesSpawned}`;
+            document.getElementById('mana-value').textContent = mana;
+        }
+
+        function drawPath() {
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 40;
+            ctx.beginPath();
+            ctx.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.stroke();
+            ctx.lineWidth = 1;
+        }
+
+        function drawPlacementPreview() {
+            // Se nada estiver selecionado para compra/uso, não faz nada.
+            if (!selectedTower && !selectedSpecialTower && !selectedPowerup) {
+                return;
+            }
+
+            let previewRadius = 0;
+            let previewColor = 'white'; // Cor padrão para o raio
+
+            // 1. Define o raio e a cor do preview com base no que está selecionado
+            if (selectedTower || selectedSpecialTower) {
+                const key = selectedTower || selectedSpecialTower;
+                // Busca a informação tanto nas torres normais quanto nas especiais
+                const towerInfo = TOWER_TYPES[key] || SPECIAL_TOWERS[key];
+                if (towerInfo) {
+                    previewRadius = new towerInfo.class(0, 0).range;
+                }
+            } else if (selectedPowerup) {
+                const powerupInfo = POWERUPS[selectedPowerup];
+                if (powerupInfo) {
+                    previewRadius = powerupInfo.radius;
+                    previewColor = 'magenta'; // Cor especial para power-ups
+                }
+            }
+
+            // 2. Desenha o raio de efeito, se houver um
+            if (previewRadius > 0) {
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = previewColor;
+                ctx.beginPath();
+                ctx.arc(mouse.x, mouse.y, previewRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+
+            // 3. Desenha o preview da TORRE (se uma torre estiver selecionada)
+            if (selectedTower || selectedSpecialTower) {
+                const key = selectedTower || selectedSpecialTower;
+                const towerInfo = TOWER_TYPES[key] || SPECIAL_TOWERS[key];
+
+                // Lógica do ponto cego do Morteiro
+                if (key === 'MORTEIRO') {
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillStyle = '#333'; // Cor de fundo para "apagar" o centro
+                    ctx.beginPath();
+                    let minRange = new towerInfo.class(0, 0).minRange;
+                    ctx.arc(mouse.x, mouse.y, minRange, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // Desenha a forma da torre no cursor
+                // Usamos um 'new' para criar uma instância temporária apenas para o desenho
+                const tempTower = new towerInfo.class(mouse.x, mouse.y);
+                tempTower.draw();
+            }
+        }
+        function drawAura(tower, ctx) {
+            const key = tower.evolutionKey;  // ex: "metralhadora", ou null
+            if (!purchasedEvolutions[key]) return;
+
+            const evo = EVOLUTIONS[key];
+            ctx.save();
+            ctx.strokeStyle = evo.color;
+            ctx.lineWidth = 4;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(tower.x, tower.y, tower.range + 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // no seu loop de render:
+        for (const tower of towers) {
+            drawAura(tower, ctx);
+            tower.draw();
+        }
+
+
+        function gameLoop(timestamp) {
+            if (!gameRunning) return;
+
+            if (game.isPaused()) {
+                // agenda o próximo frame, mas não executa updates nem draws
+                return requestAnimationFrame(gameLoop);
+            }
+
+            // 1. Limpa a tela
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Desenha o fundo estático
+            drawPath();
+
+            // 3. Atualiza todos os objetos do jogo, incluindo as novas poças
+            [...puddles, ...enemies, ...towers, ...projectiles, ...particles].forEach(obj => obj.update(timestamp));
+
+            // 4a. Desenha poças
+            puddles.forEach(puddle => puddle.draw(ctx));
+
+            // 4b. Desenha torres COM aura
+            towers.forEach(tower => {
+                if (tower && typeof tower.draw === "function") {
+                    if (tower.isBuffActive) {
+                        ctx.save();
+                        ctx.strokeStyle = "gold";
+                        ctx.lineWidth = 4;
+                        ctx.globalAlpha = 0.7 + Math.sin(Date.now() / 150) * 0.3;
+                        ctx.beginPath();
+                        ctx.arc(tower.x, tower.y, (tower.size || 15) + 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                    drawAura(tower, ctx);
+                    tower.draw();
+                }
+            });
+
+            // 4c. Desenha projéteis
+            projectiles.forEach(p => p.draw(ctx));
+
+            // 4d. Desenha inimigos e partículas
+            enemies.forEach(e => e.draw(ctx));
+            particles.forEach(p => p.draw(ctx));
+
+            powerupAuras = powerupAuras.filter(a => Date.now() < a.expires);
+            powerupAuras.forEach(a => {
+                ctx.save();
+                ctx.globalAlpha = 0.2;
+                ctx.fillStyle = 'purple';
+                ctx.beginPath();
+                ctx.arc(a.x, a.y, a.radius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            puddles.forEach(p => {
+                ctx.save();
+                ctx.strokeStyle = 'gold';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // 5. Limpeza de partículas que já sumiram
+            for (let i = particles.length - 1; i >= 0; i--) {
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // 6. NOVA LÓGICA: Limpeza de poças que já expiraram
+            for (let i = puddles.length - 1; i >= 0; i--) {
+                const p = puddles[i];
+                let expired = false;
+
+                // Lógica de expiração para poças de Morteiro/Veneno
+                if (p.creationTime && p.duration) {
+                    if (Date.now() - p.creationTime > p.duration) {
+                        expired = true;
+                    }
+                }
+                // Lógica de expiração para poças de Surto de Ouro
+                else if (p.expiresAt) {
+                    if (Date.now() > p.expiresAt) {
+                        expired = true;
+                    }
+                }
+
+                if (expired) {
+                    puddles.splice(i, 1);
+                }
+            }
+
+
+
+            // Atualiza a loja de power-ups para mostrar cooldowns, mas apenas se a loja existir
+            if (document.getElementById('powerup-list')) {
+                renderPowerupShop();
+            }
+
+            // 7. Funções de UI e de continuação do loop
+            drawPlacementPreview();
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // SUBSTITUA TODAS AS SUAS FUNÇÕES DE POWER-UP POR ESTAS 3
+
+        function renderPowerupShop() {
+            Object.keys(POWERUPS).forEach(key => {
+                const p = POWERUPS[key];
+                const btn = document.getElementById(`powerup-btn-${key}`);
+                if (!btn) return;
+
+                const now = Date.now();
+                const timeLeft = Math.ceil((p.lastUsed + p.cooldown - now) / 1000);
+
+                if (timeLeft > 0) {
+                    btn.textContent = `${p.name} (${timeLeft}s)`;
+                    btn.disabled = true;
+                } else {
+                    // Se custar ouro, mostra ouro; se custar mana, mostra mana
+                    const costText = p.costGold > 0
+                        ? `${p.costGold} Ouro`
+                        : `${p.costMana} Mana`;
+                    btn.textContent = `${p.name} — ${costText}`;
+                    // Desabilita se faltar o recurso certo
+                    btn.disabled = p.costGold > 0
+                        ? (game.gold < p.costGold)
+                        : (mana < p.costMana);
+                }
+            });
+        }
+
+
+        function selectPowerup(key) {
+            const p = POWERUPS[key];
+            if (mana < p.cost || (Date.now() - p.lastUsed < p.cooldown)) return;
+
+            // Deseleciona qualquer outra coisa
+            document.querySelectorAll('.tower-button.selected, .shop-button.selected').forEach(b => b.classList.remove('selected'));
+
+            if (selectedPowerup === key) {
+                selectedPowerup = null; // Clicou no mesmo, deseleciona
+            } else {
+                selectedTower = null;
+                selectedSpecialTower = null;
+                selectedPowerup = key;
+                document.getElementById(`powerup-btn-${key}`).classList.add('selected');
+            }
+        }
+
+        function applyPowerup(key, x, y) {
+            const p = POWERUPS[key];
+            const now = Date.now();
+
+            // calcula custo correto
+            const costMana = p.costMana || 0;
+            const costGold = p.costGold || 0;
+
+            // checa recursos e cooldown
+            if (!p
+                || mana < costMana
+                || money < costGold
+                || now - p.lastUsed < p.cooldown
+            ) return;
+
+            // deduz recursos corretos
+            mana -= costMana;
+            money -= costGold;
+            p.lastUsed = now;
+
+            createParticleEffect(x, y, 50, 'magenta', p.radius);
+
+            // Se o power-up tiver uma função 'activate', chame-a.
+            if (typeof p.activate === 'function') {
+                p.activate(x, y);
+            }
+
+            if (key === 'freeze') {
+                enemies.forEach(e => {
+                    if (Math.hypot(e.x - x, e.y - y) <= p.radius) {
+                        e.applyEffect('freeze', 5000);
+                        setTimeout(() => e.applyEffect('slow', 3000, { percentage: 0.5 }), 5000);
+                    }
+                });
+            } else if (key === 'hypnosis') {
+                const affected = enemies.filter(e => Math.hypot(e.x - x, e.y - y) <= p.radius && !(e instanceof ChefeEnemy));
+                affected.forEach(hypnotized => {
+                    // APLICA O EFEITO DE HIPNOSE
+                    hypnotized.applyEffect('hypnosis', 10000); // Fica hipnotizado por 10 segundos
+                });
+            } else if (key === 'poison') {
+                // Cria uma poça VERDE que causa dano
+                puddles.push(new MortarPuddle(x, y, 20000, p.radius, 'rgba(50, 205, 50, 0.5)'));
+            }
+            else if (key === 'goldSurge') {
+                // só para Surto de Ouro: ativa a poça e registra a aura corretamente
+                p.activate(x, y);
+                // (se precisar manter o powerupAuras manual)
+                powerupAuras.push({
+                    key: 'goldSurge',
+                    x, y,
+                    radius: p.radius,
+                    triggeredEnemies: new Set(),            // ou p.triggeredEnemies
+                    expires: Date.now() + p.duration
+                });
+            }
+        }
+
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('game-over-screen').style.display = 'block';
+        }
+
+        function setupTowerButtons() {
+            const container = document.getElementById('tower-selection');
+            const special = [
+                'FabricadoraMana',
+                'ColetoraDinheiro',
+                'FURYMANA',
+                'SHOTGUNMANA'
+            ];
+
+
+            for (const key in TOWER_TYPES) {
+                // pula as torres de mana/dinheiro para não criar aqui
+                if (special.includes(key)) continue;
+
+                const tower = TOWER_TYPES[key];
+                const button = document.createElement('button');
+                button.className = 'tower-button';
+                button.id = `tower-btn-${key}`;
+
+                const preview = document.createElement('div');
+                preview.className = 'tower-preview';
+                preview.style.backgroundColor = tower.color;
+                button.appendChild(preview);
+
+                button.innerHTML += `${tower.name}<br>Custo: ${tower.cost}`;
+                button.onclick = () => {
+                    if (selectedTower === key) {
+                        selectedTower = null;
+                        button.classList.remove('selected');
+                    } else {
+                        document.querySelectorAll('.tower-button').forEach(b => b.classList.remove('selected'));
+                        button.classList.add('selected');
+                        selectedTower = key;
+                    }
+                };
+
+                container.appendChild(button);
+            }
+
+            renderSpecialTowerButtons();
+
+        }
+
+        function setupPowerupShop() {
+            const container = document.getElementById('powerup-list');
+            container.innerHTML = '';
+
+            Object.keys(POWERUPS).forEach(key => {
+                const powerup = POWERUPS[key];
+                const button = document.createElement('button');
+
+                button.className = 'shop-button'; // <<< ESTA LINHA ESTAVA FALTANDO
+
+                button.id = `powerup-btn-${key}`;
+                button.onclick = () => selectPowerup(key);
+                container.appendChild(button);
+            });
+            renderPowerupShop(); // Chama para definir o texto e estado inicial
+        }
+
+        function renderSpecialTowerButtons() {
+            const container = document.getElementById('special-tower-shop');
+            container.innerHTML = '';
+
+            // lista das chaves das torres especiais
+            const special = [
+                'FabricadoraMana',
+                'ColetoraDinheiro',
+                'FURYMANA',
+                'SHOTGUNMANA'
+            ];
+
+
+            special.forEach(key => {
+                const tower = TOWER_TYPES[key];
+                const btn = document.createElement('button');
+                btn.className = 'tower-button';           // pega o estilo “original”
+                btn.id = `tower-btn-${key}`;
+
+                // preview colorido igual às demais
+                const preview = document.createElement('div');
+                preview.className = 'tower-preview';
+                preview.style.backgroundColor = tower.color;
+                btn.appendChild(preview);
+
+                // nome + custo embaixo
+                btn.innerHTML += `
+      ${tower.name}<br>
+      <span class="tower-cost">Custo: ${tower.cost} Mana</span>
+    `;
+
+                btn.onclick = () => selectTower(key, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function setupEvolutionShop() {
+            const list = document.getElementById('evolution-list');
+            list.innerHTML = '';
+            Object.keys(EVOLUTIONS).forEach(key => {
+                const evo = EVOLUTIONS[key];
+                const unlocked = purchasedEvolutions[key];
+                const box = document.createElement('div');
+                box.style = `
+            background: ${unlocked ? '#222' : '#333'};
+            border: 2px solid ${evo.color};
+            border-radius: 8px;
+            padding: 12px 18px;
+            min-width: 140px;
+            text-align: center;
+            box-shadow: ${unlocked ? '0 0 10px ' + evo.color : 'none'};
+        `;
+                box.innerHTML = `
+            <div style="font-weight:bold; color:${evo.color}; margin-bottom:6px;">${evo.name}</div>
+            <div style="font-size:0.95em; margin-bottom:8px;">${evo.type === 'ativa' ? 'Ativa' : 'Passiva'}</div>
+            <div style="margin-bottom:8px;">Custo: <span style="color:#ffd700">${evo.cost}</span></div>
+        `;
+                const btn = document.createElement('button');
+                btn.textContent = unlocked ? 'Desbloqueada' : 'Comprar';
+                btn.disabled = unlocked;
+                btn.style = `
+            padding: 6px 14px;
+            border-radius: 5px;
+            border: 2px solid ${unlocked ? '#aaa' : evo.color};
+            background: ${unlocked ? '#444' : evo.color};
+            color: white;
+            cursor: ${unlocked ? 'not-allowed' : 'pointer'};
+            font-weight: bold;
+        `;
+                btn.onclick = () => {
+                    buyEvolution(key);
+                    setupEvolutionShop();
+                };
+                btn.id = `btn-${key}`;
+                box.appendChild(btn);
+                list.appendChild(box);
+            });
+        }
+
+        // --- Event Listeners ---
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+
+        const SPECIAL_TOWERS = ['FabricadoraMana', 'ColetoraDinheiro', 'FURYMANA', 'SHOTGUNMANA'];
+
+        canvas.addEventListener('click', () => {
+            // Ordem de prioridade: Power-up > Torre Especial > Torre Normal > Selecionar Torre
+            console.log(
+                `Surto de Ouro disparado em: (${mouse.x.toFixed(0)}, ${mouse.y.toFixed(0)})`
+            );
+            // 1. Tenta usar um POWER-UP
+            if (selectedPowerup) {
+                applyPowerup(selectedPowerup, mouse.x, mouse.y);
+                document.getElementById(`powerup-btn-${selectedPowerup}`).classList.remove('selected');
+                selectedPowerup = null;
+                return;
+            }
+
+            if (selectedTower) {
+                const towerInfo = TOWER_TYPES[selectedTower];
+                // Verifica se é torre especial
+                if (SPECIAL_TOWERS.includes(selectedTower)) {
+                    if (mana >= towerInfo.cost) {
+                        mana -= towerInfo.cost;
+                        towers.push(new towerInfo.class(mouse.x, mouse.y));
+                        document.getElementById(`tower-btn-${selectedTower}`).classList.remove('selected');
+                        selectedTower = null;
+                    }
+                } else {
+                    if (money >= towerInfo.cost) {
+                        money -= towerInfo.cost;
+                        towers.push(new towerInfo.class(mouse.x, mouse.y));
+                        document.getElementById(`tower-btn-${selectedTower}`).classList.remove('selected');
+                        selectedTower = null;
+                    }
+                }
+                return;
+            }
+
+            // 4. Se nada estiver selecionado para compra, tenta SELECIONAR uma torre no mapa
+            let towerClicked = false;
+            for (const tower of towers) {
+                const distance = Math.hypot(mouse.x - tower.x, tower.y);
+                if (distance < (tower.size || 15)) {
+                    selectedPlacedTower = tower;
+                    showTowerActionPanel(tower);
+                    towerClicked = true;
+                    break;
+                }
+            }
+            if (!towerClicked) {
+                selectedPlacedTower = null;
+                hideTowerActionPanel();
+            }
+        });
+
+        // --- LÓGICA DE INÍCIO DE JOGO CORRIGIDA ---
+
+        function setupCustomSpawnControls() {
+            const container = document.getElementById('spawn-buttons-container');
+            const controls = document.getElementById('custom-spawn-controls');
+            const goldenToggle = document.getElementById('golden-toggle');
+            const prismaticToggle = document.getElementById('prismatic-toggle');
+            controls.style.display = 'flex';
+
+            // Exclusividade entre Dourado e Prismático
+            prismaticToggle.addEventListener('change', () => {
+                if (prismaticToggle.checked) {
+                    goldenToggle.checked = false;
+                    goldenToggle.disabled = true;
+                } else {
+                    goldenToggle.disabled = false;
+                }
+            });
+
+            // Limpa botões antigos se houver
+            container.innerHTML = "";
+
+            for (const key in ENEMY_TYPES) {
+                const enemyInfo = ENEMY_TYPES[key];
+                const button = document.createElement('button');
+                button.className = 'spawn-btn';
+                button.textContent = enemyInfo.name;
+                button.onclick = () => {
+                    const isGolden = goldenToggle.checked;
+                    const isPrismatic = prismaticToggle.checked;
+                    const EnemyClass = enemyInfo.class;
+
+                    if (EnemyClass === ChefeEnemy) {
+                        enemies.push(new ChefeEnemy(customBossCount++));
+                    } else {
+                        enemies.push(new EnemyClass(isGolden, isPrismatic));
+                    }
+                    totalEnemiesSpawned++;
+                };
+                container.appendChild(button);
+            }
+        }
+
+        function startGame(difficulty) {
+            currentDifficulty = difficulty;
+            const settings = DIFFICULTY_SETTINGS[difficulty];
+
+            document.getElementById('difficulty-selection-screen').style.display = 'none';
+            clearInterval(difficultyTimerInterval);
+
+            gameRunning = true;
+            setupTowerButtons();
+            setupEvolutionShop();
+            setupPowerupShop();
+
+            // Lógica para iniciar o modo de jogo
+            if (settings.isCustom) {
+                // Modo Personalizado
+                money = 9999999;
+                lives = 9999;
+                mana = 1000;
+                setupCustomSpawnControls();
+            } else {
+                // Modos normais
+                setInterval(spawnEnemy, 2000);
+            }
+
+            // dispara atualização inicial do botão
+            updateChallengeButton();
+            // clique no botão
+            document.getElementById('challenge-btn')
+                .addEventListener('click', startChallenge);
+
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function showDifficultyScreen() {
+            let timeLeft = 40;
+            const timerElement = document.getElementById('difficulty-timer');
+            timerElement.textContent = timeLeft;
+
+            difficultyTimerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    console.log("Tempo esgotado! Iniciando no modo Médio.");
+                    startGame('MEDIO');
+                }
+            }, 1000);
+
+            document.querySelectorAll('.diff-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const difficulty = button.getAttribute('data-difficulty');
+                    console.log(`Dificuldade selecionada: ${difficulty}`);
+                    startGame(difficulty);
+                });
+            });
+        }
+
+        function loadEvolutions() {
+            purchasedEvolutions = JSON.parse(sessionStorage.getItem("evolutions")) || {};
+            // aqui você pode, por exemplo, habilitar botões verdes:
+            Object.keys(EVOLUTIONS).forEach(k => {
+                const btn = document.querySelector(`#btn-${k}`);
+                if (purchasedEvolutions[k] && btn) {
+                    btn.classList.add("unlocked");
+                }
+            });
+        }
+
+        game.pause = function () {
+            if (!this.paused) {
+                this.paused = true;
+                console.log('Jogo pausado');
+            }
+        };
+
+        game.play = function () {
+            if (this.paused) {
+                this.paused = false;
+                console.log('Jogo reiniciado');
+            }
+        };
+
+        game.isPaused = function () {
+            return this.paused;
+        };
+
+
+
+        window.addEventListener("load", loadEvolutions);
+
+
+        // Inicia o processo mostrando a tela de seleção, em vez de iniciar o jogo diretamente
+        showDifficultyScreen();
+
+        (function () {
+            const trigger = document.querySelectorAll('.secret-trigger')[0];
+            const menu = document.getElementById('secret-menu');
+            const input = document.getElementById('secret-input');
+            const btn = document.getElementById('secret-send');
+
+            let clickCount = 0;
+            const MAX_CLICKS = 5;
+
+            // 1) Contador de cliques
+            trigger.addEventListener('click', () => {
+                clickCount++;
+                if (clickCount >= MAX_CLICKS) {
+                    menu.style.display = 'block';
+                }
+            });
+
+            // 2) Função de execução de comandos
+            function runCommand(cmdLine) {
+                const parts = cmdLine.trim().split(/\s+/);
+                const cmd = parts[0].toLowerCase();
+                const arg = parts.slice(1).join(' ');
+
+                switch (cmd) {
+                    case 'pause':
+                    case 'play':
+                        if (game.isPaused()) game.play();
+                        else game.pause();
+                        alert('Jogo ' + (game.isPaused() ? 'pausado' : 'reiniciado'));
+                        break;
+
+
+                    case 'difficulty':
+                        if (!arg) {
+                            alert('Use: difficulty {nome}');
+                            break;
+                        }
+                        // normaliza tudo pra minúsculas
+                        const inputNormalized = arg.trim().toLowerCase();
+
+                        // encontra a key real do DIFFICULTY_SETTINGS cujo toLowerCase() bate com o input
+                        const realKey = Object.keys(DIFFICULTY_SETTINGS)
+                            .find(key => key.toLowerCase() === inputNormalized);
+
+                        if (realKey) {
+                            startGame(realKey);
+                            alert('Dificuldade ajustada para "' + realKey + '"');
+                        } else {
+                            alert('Dificuldade "' + arg + '" não existe. Digite help para ver as opções.');
+                        }
+                        break;
+
+                    case 'money':
+                        money += 1_000_000;
+                        alert('Você recebeu 1 000 000 de dinheiro');
+                        break;
+
+                    case 'mana':
+                        // Ajusta o mana do jogador para no mínimo 1000
+                        player.mana = Math.max(player.mana, 1000);
+                        updateUI();  // Re-renderiza a barra de mana na interface
+                        alert('Você recebeu mana até 1000');
+                        break;
+
+                    case 'live':
+                    case 'lives':
+                        lives = 9999;
+                        alert('Você agora tem 9 999 vidas');
+                        break;
+
+                    case 'no':
+                    case 'no cooldown':
+                        challenge.nextAvailable = Date.now();
+                        updateChallengeButton();
+                        alert('Cooldown de desafio removido');
+                        break;
+
+                    case 'evolution':
+                        Object.keys(EVOLUTIONS).forEach(key => {
+                            purchasedEvolutions[key] = true;
+                        });
+                        sessionStorage.setItem("evolutions", JSON.stringify(purchasedEvolutions));
+                        updateUI();
+                        setupEvolutionShop();
+                        alert('Todas as evoluções liberadas!');
+                        break;
+
+                    case 'spawn':
+                        const typeKey = parts[1]?.toLowerCase();
+                        const quality = parts[2]?.toLowerCase();
+                        const countNum = Math.min(parseInt(parts[3], 10) || 1, 30);
+                        const spacing = Math.min(parseInt(parts[4], 10) || 0, 200);
+
+                        const validTypes = ['normal', 'rapido', 'tank', 'rei', 'chefe', 'invocador', 'monge', 'disruptor', 'fantasma'];
+                        if (!validTypes.includes(typeKey)) {
+                            alert(`Tipo inválido. Use: ${validTypes.join(', ')}`);
+                            break;
+                        }
+
+                        const isGolden = (quality === 'gold');
+                        const isPrismatic = (quality === 'prism');
+
+                        for (let i = 0; i < countNum; i++) {
+                            let enemy;
+                            switch (typeKey) {
+                                case 'normal': enemy = new NormalEnemy(isGolden, isPrismatic); break;
+                                case 'rapido': enemy = new RapidoEnemy(isGolden, isPrismatic); break;
+                                case 'tank': enemy = new TankEnemy({ isGolden, isPrismatic }); break;
+                                case 'rei': enemy = new ReiEnemy(isGolden, isPrismatic); break;
+                                case 'chefe': enemy = new ChefeEnemy({ isGolden, isPrismatic }); break;
+                                case 'invocador': enemy = new SummonerEnemy({ isGolden, isPrismatic }); break;
+                                case 'monge': enemy = new MonkEnemy({ isGolden, isPrismatic }); break;
+                                case 'disruptor': enemy = new DisruptorEnemy({ isGolden, isPrismatic }); break;
+                                case 'fantasma': enemy = new FantasmaEnemy(isGolden, isPrismatic); break;
+                            }
+
+                            if (enemy) {
+                                const lastPoint = path[path.length - 1];
+                                enemy.x = lastPoint.x + (i * spacing);
+                                enemy.y = lastPoint.y;
+                                enemies.push(enemy);
+                                totalEnemiesSpawned++;
+                            }
+                        }
+
+                        updateUI();
+                        alert(`Spawn: ${countNum}× ${typeKey} ${quality}${spacing ? ` a cada ${spacing}px` : ''}`);
+                        break;
+
+                    case 'help':
+                        alert(
+                            'Comandos secretos:\n' +
+                            '- pause / play\n' +
+                            '- difficulty {nome}\n' +
+                            '- money\n' +
+                            '- mana\n' +
+                            '- live\n' +
+                            '- no cooldown\n' +
+                            '- evolution\n' +
+                            '- spawn {tipo} {basic|gold|prism} {quant} {dist?}\n' +
+                            '    • tipos: normal, rapido, tank, rei, chefe, invocador, monge, disruptor\n' +
+                            '    • basic/gold/prism: qualidade do inimigo\n' +
+                            '    • quant (1–30)\n' +
+                            '    • dist (px, opcional 0–200)\n' +
+                            '- help'
+                        );
+                        break;
+
+                    default:
+                        alert('Comando desconhecido. Digite help para ver a lista.');
+                }
+            }
+
+            // 3) Ao clicar em OK ou apertar Enter
+            btn.addEventListener('click', () => {
+                runCommand(input.value);
+                input.value = '';
+            });
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    runCommand(input.value);
+                    input.value = '';
+                }
+            });
+        })();
+
+    </script>
+</body>
+
+</html>

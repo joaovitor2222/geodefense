@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Informações das Torres e Inimigos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #e9e9e9;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 20px;
+            left: 80px;
+            width: 48px;
+            height: 48px;
+            background-color: #87CEFA;
+            /* mesmo azul-claro */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .nav-button2 {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 48px;
+            height: 48px;
+            background-color: #87CEFA;
+            /* mesmo azul-claro */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .nav-button:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-button2:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-button img {
+            width: 28px;
+            height: 28px;
+        }
+
+        .nav-button2 img {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Indicador de coluna clicável */
+        th.sortable {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        th.sortable::after {
+            content: "⇅";
+            /* seta dupla padrão */
+            font-size: 0.8em;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        th.sortable.asc::after {
+            content: "↑";
+        }
+
+        th.sortable.desc::after {
+            content: "↓";
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="index.html" class="nav-button" title="Voltar ao jogo">
+        <img src="https://cdn-icons-png.flaticon.com/512/4738/4738879.png" alt="Home">
+    </a>
+
+    <!-- Ícone de comandos -->
+    <button id="command-btn" class="nav-button2" title="Ver Comandos">
+        <img src="https://cdn-icons-png.flaticon.com/512/3524/3524635.png" alt="Cmd">
+    </button>
+
+    <!-- Caixa de comandos (inicialmente oculta) -->
+    <div id="command-box" style="display:none; position:fixed; top:20%; left:50%;
+     transform:translateX(-50%); background:#fff; color:#000; padding:20px;
+     border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:200;">
+        <h3>Comandos Disponíveis</h3>
+        <ul>
+            <li><code>help</code> – mostra lista de comandos</li>
+            <li><code>live</code> – 9999 vidas</li>
+            <li><code>spawn tank prism 1</code> – invoca um Tank prismatico</li>
+            <li><code>mana</code> – vc fica com 1000 mana</li>
+            <!-- … outros comandos … -->
+        </ul>
+        <button id="copy-cmds">Copiar Comandos</button>
+        <button id="close-cmds">Fechar</button>
+    </div>
+
+
+    <h1>Guia de Torres e Inimigos</h1>
+
+    <h2>Torres</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Visual</th>
+                <th class="sortable" data-col="1">Nome</th>
+                <th class="sortable" data-col="2">Estágio</th>
+                <th class="sortable" data-col="3">Custo</th>
+                <th class="sortable" data-col="4">Alcance (px)</th>
+                <th class="sortable" data-col="5">Dano</th>
+                <th class="sortable" data-col="6">Cooldown (ms)</th>
+                <th class="sortable" data-col="7">DPS Aproximado</th>
+                <th>Notas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><canvas id="evo1" width="50" height="50"></canvas></td>
+                <td>Torre Evolutiva</td>
+                <td>1</td>
+                <td>300</td>
+                <td>30</td>
+                <td>200</td>
+                <td>8000</td>
+                <td>25</td>
+                <td>Ganha bônus de evolução de 2 min e 30 seg por abate. evolui para o 2 em 5 minutos</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo2" width="50" height="50"></canvas></td>
+                <td>Torre Evolutiva</td>
+                <td>2</td>
+                <td>(300)</td>
+                <td>60</td>
+                <td>300</td>
+                <td>4000</td>
+                <td>75</td>
+                <td>Ganha bônus de evolução de 1 minuto por abate. evolui para o 3 em 5 minutos</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo3" width="50" height="50"></canvas></td>
+                <td>Torre Evolutiva</td>
+                <td>3</td>
+                <td>(300)</td>
+                <td>100</td>
+                <td>350</td>
+                <td>1500</td>
+                <td>233</td>
+                <td>Ganha bônus de evolução de 20 segundos por abate. evolui para o 4 em 5 minutos</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo4" width="50" height="50"></canvas></td>
+                <td>Torre Evolutiva</td>
+                <td>4</td>
+                <td>(300)</td>
+                <td>160</td>
+                <td>450</td>
+                <td>1000</td>
+                <td>450</td>
+                <td>Ganha bônus de evolução de 5 segundos por abate. evolui para o 5 em 5 minutos</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo5" width="50" height="50"></canvas></td>
+                <td>Torre Evolutiva</td>
+                <td>5</td>
+                <td>(300)</td>
+                <td>180</td>
+                <td>580</td>
+                <td>800</td>
+                <td>725</td>
+                <td>Ganha bônus de evolução de 5 segundos por abate. evolui para o 6 em 5 minutos</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo6" width="50" height="50"></canvas></td>
+                <td>Torre Evolutiva</td>
+                <td>6</td>
+                <td>(300)</td>
+                <td>200</td>
+                <td>650</td>
+                <td>800</td>
+                <td>813</td>
+                <td>Estágio máximo.</td>
+            </tr>
+            <tr>
+                <td><canvas id="inferno1" width="50" height="50"></canvas></td>
+                <td>Torre Infernal</td>
+                <td>1</td>
+                <td>6500</td>
+                <td>110</td>
+                <td>–</td>
+                <td>–</td>
+                <td>100</td>
+                <td>dano minimo, muda para estagio 2 em &lt;5s</td>
+            </tr>
+            <tr>
+                <td><canvas id="inferno2" width="50" height="50"></canvas></td>
+                <td>Torre Infernal</td>
+                <td>2</td>
+                <td>6500</td>
+                <td>110</td>
+                <td>–</td>
+                <td>–</td>
+                <td>350</td>
+                <td>dano medio se ficar no alvo de 5–10s</td>
+            </tr>
+            <tr>
+                <td><canvas id="inferno3" width="50" height="50"></canvas></td>
+                <td>Torre Infernal</td>
+                <td>3</td>
+                <td>6500</td>
+                <td>110</td>
+                <td>–</td>
+                <td>–</td>
+                <td>15000</td>
+                <td>dano maximo após ≥10s</td>
+            </tr>
+            <tr>
+                <td><canvas id="eletro" width="50" height="50"></canvas></td>
+                <td>Torre Eletrocutadora</td>
+                <td>-</td>
+                <td>8000</td>
+                <td>120</td>
+                <td>16000</td>
+                <td>10000</td>
+                <td>1600</td>
+                <td>Dano em área (60px).</td>
+            </tr>
+            <tr>
+                <td><canvas id="metralhadora" width="50" height="50"></canvas></td>
+                <td>Torre Metralhadora</td>
+                <td>-</td>
+                <td>2000</td>
+                <td>50</td>
+                <td>200</td>
+                <td>200</td>
+                <td>1000</td>
+                <td>Alta cadência de tiro.</td>
+            </tr>
+            <tr>
+                <td><canvas id="balanceada" width="50" height="50"></canvas></td>
+                <td>Torre Balanceada</td>
+                <td>-</td>
+                <td>3500</td>
+                <td>150</td>
+                <td>800</td>
+                <td>1000</td>
+                <td>800</td>
+                <td>torre com dano mediano e cadencia mediana</td>
+            </tr>
+            <tr>
+                <td><canvas id="morteiro" width="50" height="50"></canvas></td>
+                <td>Torre Morteiro</td>
+                <td>-</td>
+                <td>4000</td>
+                <td>30-250</td>
+                <td>350</td>
+                <td>3000</td>
+                <td>117</td>
+                <td>Dano em área (50px), ponto cego em 30px.</td>
+            </tr>
+            <tr>
+                <td><canvas id="gelo" width="50" height="50"></canvas></td>
+                <td>Torre de Gelo</td>
+                <td>-</td>
+                <td>5000</td>
+                <td>100</td>
+                <td>Lentidão</td>
+                <td>-</td>
+                <td>-</td>
+                <td>Aura de lentidão constante.</td>
+            </tr>
+            <!-- Fabricadora de Mana -->
+            <tr>
+                <td><canvas id="fabricadora-mana" width="50" height="50"></canvas></td>
+                <td>Fabricadora de Mana</td>
+                <td>-</td>
+                <td>15 (mana)</td>
+                <td>100</td>
+                <td>400</td>
+                <td>1000</td>
+                <td>400</td>
+                <td>Gera 1 mana/tiro; buff de Fúria na área ×3 dano</td>
+            </tr>
+
+            <!-- Shotgun de Mana -->
+            <tr>
+                <td><canvas id="shotgun-mana" width="50" height="50"></canvas></td>
+                <td>Shotgun de Mana</td>
+                <td>-</td>
+                <td>25 (mana)</td>
+                <td>130</td>
+                <td>400×10</td>
+                <td>– recarga 7000 ms –</td>
+                <td>–</td>
+                <td>
+                    Dispara 10 projéteis (full-dmg radius 40 px),
+                    baseAmmo 6 + extraAmmo 4, reloadTime 7000 ms;
+                    poderosa contra inimigos de alto hp:
+                    buff ×3 dano em aura menos eficiente de longe.
+                </td>
+            </tr>
+            <tr>
+                <td><canvas id="coletora-dinheiro" width="50" height="50"></canvas></td>
+                <td>Torre Coletora de Dinheiro</td>
+                <td>-</td>
+                <td>10 (mana)</td> <!-- custo -->
+                <td>100</td> <!-- alcance -->
+                <td>400</td> <!-- dano por tiro -->
+                <td>1000</td> <!-- cooldown (ms) -->
+                <td>250</td> <!-- ouro gerado/tiro -->
+                <td>
+                    Gera 250 de ouro por tiro;<br />
+                    projétil causa 400 de dano (×4 em fúria local; ×3 em aura)
+                </td>
+            </tr>
+            <!-- Torre da Fúria -->
+            <tr>
+                <td><canvas id="torre-furia" width="50" height="50"></canvas></td>
+                <td>Torre da Fúria</td>
+                <td>-</td>
+                <td>40 (mana)</td> <!-- custo -->
+                <td>120</td> <!-- alcance -->
+                <td>-</td> <!-- dano (não ataca) -->
+                <td>-</td> <!-- cooldown (não ataca) -->
+                <td>-</td> <!-- extra -->
+                <td>
+                    Buff em área para torres aliadas;<br />
+                    cooldown de 60 s, duração de 20 s;<br />
+                    torres em alcance recebem ×3 de dano
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Evoluções</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Icone</th>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Custo</th>
+                <th>Descrição</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><canvas id="evo-icon-evolutiva" width="40" height="40"></canvas></td>
+                <td>Evolutiva</td>
+                <td>Ativa</td>
+                <td>30 000</td>
+                <td>3º tiro dobra dano + congela 800 ms; abates aceleram próxima evolução.</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo-icon-metralhadora" width="40" height="40"></canvas></td>
+                <td>Metralhadora</td>
+                <td>Passiva</td>
+                <td>150 000</td>
+                <td>A cada 30 s entra em Fúria (×4 dano) por 5 s.</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo-icon-balanceada" width="40" height="40"></canvas></td>
+                <td>Balanceada</td>
+                <td>Ativa</td>
+                <td>60 000</td>
+                <td>3º tiro aplica veneno: 300 DPS +300/stack até 4 stacks (máx 2100 DPS).</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo-icon-morteiro" width="40" height="40"></canvas></td>
+                <td>Morteiro</td>
+                <td>Ativa</td>
+                <td>35 000</td>
+                <td>3º tiro é projétil explosivo teleguiado (AOE 50 px).</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo-icon-gelo" width="40" height="40"></canvas></td>
+                <td>Gelo</td>
+                <td>Passiva</td>
+                <td>250 000</td>
+                <td>Aura de lentidão + super congelamento (1400 dano +3,5 s) a cada 60 s.</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo-icon-infernal" width="40" height="40"></canvas></td>
+                <td>Infernal</td>
+                <td>Passiva</td>
+                <td>100 000</td>
+                <td>A cada 60 s entra em “Toasting” (10 s), DPS ≥ estágio 2 e estágio 3 em 5 s.<br>traduzindo: Ela
+                    começa no 2º estágio podendo atingir o 3º</td>
+            </tr>
+            <tr>
+                <td><canvas id="evo-icon-eletro" width="40" height="40"></canvas></td>
+                <td>Eletrocutadora</td>
+                <td>Ativa</td>
+                <td>50 000</td>
+                <td>3º tiro reduz cooldown para 1 s, podendo criar um burst de 2 tiros quase sequenciais.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Inimigos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Visual</th>
+                <th>Nome</th>
+                <th>Descrição</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><canvas id="normal" width="50" height="50"></canvas></td>
+                <td>Inimigo Normal</td>
+                <td>Vida: 2 000 HP; Velocidade: 1.5 px/tick; Recompensa: 100 moedas;<br>
+                    Dourado: +30 % de vida & ×6 no valor (20 % de chance).<br>
+                    Unidade básica sem efeitos especiais — serve de “massa” para acumular DPS.</td>
+            </tr>
+            <tr>
+                <td><canvas id="rapido" width="50" height="50"></canvas></td>
+                <td>Inimigo Rápido</td>
+                <td>Vida: 400 HP; Velocidade: 4 px/tick; Recompensa: 50 moedas;<br>
+                    Dourado: +30 % de vida & ×6 no valor.<br>
+                    Alta mobilidade, mas muito frágil — testa sua cobertura de área e cadência.</td>
+            </tr>
+            <tr>
+                <td><canvas id="tank" width="50" height="50"></canvas></td>
+                <td>Inimigo Tank</td>
+                <td> Vida: 23 000 HP; Velocidade: 0.3 px/tick; Recompensa: 8 000 moedas;<br>
+                    Dourado: +30 % de vida & ×6 no valor.<br>
+                    Movimento lento e alta resistência — força torres de alto DPS a focarem longo tempo.</td>
+            </tr>
+            <tr>
+                <td><canvas id="invocador" width="50" height="50"></canvas></td>
+                <td>Inimigo Invocador</td>
+                <td>Vida: 4 000 HP; Velocidade: 0.8 px/tick; Recompensa: 500 moedas;<br>
+                    Dourado: +30 % de vida & ×6 no valor.<br>
+                    A cada 8 s invoca 4 Inimigos Rápidos (podem vir dourados) ao seu redor, sobrecarregando defesas.
+                </td>
+            </tr>
+            <tr>
+                <td><canvas id="disruptor" width="50" height="50"></canvas></td>
+                <td>Inimigo Disruptor</td>
+                <td>Vida: 15 000 HP; Velocidade: 0.7 px/tick; Recompensa: 1 000 moedas;<br>
+                    Dourado: +30 % de vida & ×6 no valor.<br>
+                    A cada 4 s dispara um projétil emizo em direção à Torre Infernal de estágio mais alto (≤200 px),
+                    resetando seu carregamento.</td>
+            </tr>
+            <tr>
+                <td><canvas id="chefe" width="50" height="50"></canvas></td>
+                <td>Chefe</td>
+                <td> Surge a cada 200 inimigos.<br>
+                    Vida: 60 000 HP +10 % por spawn anterior (max +50 %);<br>
+                    Velocidade: 0.3 px/tick +5 % por spawn anterior (max +25 %);<br>
+                    Recompensa: 20 000 moedas;<br>
+                    Cor muda ciclicamente (hue), tamanho e atributos escalam levemente a cada aparição.</td>
+            </tr>
+            <tr>
+                <td><canvas id="fantasma" width="50" height="50"></canvas></td>
+                <td>Fantasma</td>
+                <td>
+                    Formato losango; vida 4500; invisível/intangível 10s (20% visível),
+                    religa 10s extra se 10 aliados morrerem a ≤200px; 20% de chance dourado<br>
+                    Dourado: +30 % de vida & ×6 no valor.
+                </td>
+            </tr>
+            <td><canvas id="monge" width="50" height="50"></canvas></td>
+            <td>Inimigo Monge</td>
+            <td>Vida: 12 000 HP; Velocidade: 1.5; Cura 1500–4500 a cada 0.8 s ou revive aliado fraco com buff.</td>
+            </tr>
+            <tr>
+                <td><canvas id="cavaleiro" width="50" height="50"></canvas></td>
+                <td>Inimigo Cavaleiro</td>
+                <td>Vida: 5000 HP; Velocidade: 1.5; Recompensa: 25;<br>unidade de apoio sem habilidades especiais.</td>
+            </tr>
+            <tr>
+                <td><canvas id="rei" width="50" height="50"></canvas></td>
+                <td>Inimigo Rei</td>
+                <td>Vida: 60 000 HP +10 % por spawn (máx +50 %);<br>velocidade 0.3 +5 %/spawn (máx 25 %);<br>invoca 2
+                    cavaleiros a cada 10 s e em thresholds de vida.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+
+        document.querySelectorAll('table thead th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const table = th.closest('table');
+                const tbody = table.querySelector('tbody');
+                const colIndex = Number(th.dataset.col);
+                const isNumeric = ['Custo', 'Estágio', 'Alcance', 'Dano', 'Cooldown', 'DPS'].some(t => t === th.textContent.split(' ')[0]);
+                const currentOrder = th.classList.contains('asc') ? 'asc' : th.classList.contains('desc') ? 'desc' : null;
+                // Limpa outras setas
+                table.querySelectorAll('th.sortable').forEach(h => h.classList.remove('asc', 'desc'));
+                const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                th.classList.add(newOrder);
+
+                // Extrai linhas em array
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort((a, b) => {
+                    let aText = a.children[colIndex].textContent.trim();
+                    let bText = b.children[colIndex].textContent.trim();
+                    if (isNumeric) {
+                        aText = parseFloat(aText.replace(/[^0-9\.\-]/g, '')) || 0;
+                        bText = parseFloat(bText.replace(/[^0-9\.\-]/g, '')) || 0;
+                    }
+                    if (aText < bText) return newOrder === 'asc' ? -1 : 1;
+                    if (aText > bText) return newOrder === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                // Reanexa em ordem
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+
+        // Objeto para guardar as funções de desenho
+        const Drawer = {
+            drawEvolutiva: (ctx, x, y, stage) => {
+                const stages = [
+                    { color: '#8B0000', size: 8 }, { color: '#FF4500', size: 9 },
+                    { color: 'orange', size: 10 }, { color: 'yellow', size: 12 },
+                    { color: '#ADFF2F', size: 14 }, { color: '#00BFFF', size: 15 }
+                ];
+                const s = stages[stage - 1];
+                ctx.fillStyle = s.color;
+                ctx.beginPath();
+                ctx.arc(x, y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'white'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(stage, x, y);
+            },
+            drawInfernal: (ctx, x, y) => {
+                ctx.fillStyle = '#400000'; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
+            },
+            drawEletro: (ctx, x, y) => {
+                ctx.fillStyle = 'blue'; ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
+            },
+            drawMetralhadora: (ctx, x, y) => {
+                ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+            },
+            drawBalanceada: (ctx, x, y) => {
+                ctx.fillStyle = 'green'; ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2); ctx.fill();
+            },
+            drawMorteiro: (ctx, x, y) => {
+                ctx.fillStyle = '#8B4513'; ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#654321'; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
+            },
+            drawGelo: (ctx, x, y) => {
+                ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+            },
+            drawNormal: (ctx, x, y) => {
+                ctx.fillStyle = 'red'; ctx.fillRect(x - 10, y - 10, 20, 20);
+            },
+            drawRapido: (ctx, x, y) => {
+                ctx.fillStyle = 'red'; ctx.beginPath();
+                ctx.moveTo(x, y - 10); ctx.lineTo(x - 10, y + 10); ctx.lineTo(x + 10, y + 10);
+                ctx.closePath(); ctx.fill();
+            },
+            drawTank: (ctx, x, y) => {
+                ctx.fillStyle = 'darkred'; ctx.beginPath();
+                ctx.moveTo(x, y - 15); ctx.lineTo(x + 15, y - 5); ctx.lineTo(x + 10, y + 15);
+                ctx.lineTo(x - 10, y + 15); ctx.lineTo(x - 15, y - 5);
+                ctx.closePath(); ctx.fill();
+            },
+            drawInvocador: (ctx, x, y) => {
+                ctx.fillStyle = 'purple'; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+            },
+            drawDisruptor: (ctx, x, y) => {
+                const radius = 18;
+                ctx.fillStyle = 'cyan'; ctx.beginPath();
+                ctx.moveTo(x, y - radius); ctx.lineTo(x - radius, y + radius); ctx.lineTo(x + radius, y + radius);
+                ctx.closePath(); ctx.fill();
+            },
+            drawChefe: (ctx, x, y, hue) => {
+                const radius = 25;
+                ctx.fillStyle = `hsl(${hue}, 100%, 50%)`; ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+            },
+            drawFantasma: (ctx, x, y) => {
+                const size = 15;
+                ctx.fillStyle = 'blue';
+                ctx.beginPath();
+                ctx.moveTo(x, y - size);
+                ctx.lineTo(x + size, y);
+                ctx.lineTo(x, y + size);
+                ctx.lineTo(x - size, y);
+                ctx.closePath();
+                ctx.fill();
+            },
+            // Monge: triângulo verde (ou dourado, se quiser refletir isGolden)
+            drawMonge: (ctx, x, y) => {
+                const size = 12;
+                ctx.fillStyle = 'green';
+                ctx.beginPath();
+                ctx.moveTo(x, y - size);          // topo
+                ctx.lineTo(x - size, y + size);   // canto inferior esquerdo
+                ctx.lineTo(x + size, y + size);   // canto inferior direito
+                ctx.closePath();
+                ctx.fill();
+            },
+
+            drawCavaleiro: (ctx, x, y) => {
+                ctx.fillStyle = '#00FF09';
+                ctx.fillRect(x - 10, y - 10, 20, 20);
+                ctx.strokeStyle = 'black'; ctx.lineWidth = 2;
+                ctx.strokeRect(x - 10, y - 10, 20, 20);
+            },
+            drawRei: (ctx, x, y) => {
+                const radius = 12;
+                ctx.fillStyle = '#003CFF';   // azul do Rei
+                ctx.beginPath();
+                // flat-top hexagon: vértices a cada 60° começando em 0°
+                for (let i = 0; i < 6; i++) {
+                    const angle = i * (2 * Math.PI / 6);
+                    const px = x + radius * Math.cos(angle);
+                    const py = y + radius * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+            },
+
+        };
+
+        // ——— Desenho das evoluções ———
+        Drawer.drawEvoIcon = (ctx, x, y, key) => {
+            switch (key) {
+                case 'evolutiva':
+                    // desenha círculo vermelho pequeno com “E” no centro
+                    ctx.fillStyle = '#8B0000';
+                    ctx.beginPath(); ctx.arc(x, y, 16, 0, 2 * Math.PI); ctx.fill();
+                    ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('E', x, y);
+                    break;
+                case 'metralhadora':
+                    ctx.fillStyle = 'orange';
+                    ctx.fillRect(x - 12, y - 12, 24, 24);
+                    break;
+                case 'balanceada':
+                    ctx.fillStyle = 'green';
+                    ctx.beginPath(); ctx.moveTo(x - 10, y); ctx.lineTo(x, y + 10);
+                    ctx.lineTo(x + 10, y); ctx.lineTo(x, y - 10); ctx.closePath(); ctx.fill();
+                    break;
+                case 'morteiro':
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath(); ctx.arc(x, y, 12, 0, 2 * Math.PI); ctx.fill();
+                    ctx.fillStyle = '#654321';
+                    ctx.beginPath(); ctx.arc(x, y, 6, 0, 2 * Math.PI); ctx.fill();
+                    break;
+                case 'gelo':
+                    ctx.fillStyle = 'cyan';
+                    ctx.beginPath(); ctx.arc(x, y, 12, 0, 2 * Math.PI); ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(x, y, 14, 0, 2 * Math.PI); ctx.stroke();
+                    break;
+                case 'infernal':
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath(); ctx.arc(x, y, 12, 0, 2 * Math.PI); ctx.fill();
+                    ctx.strokeStyle = '#400000'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(x, y, 16, 0, 2 * Math.PI); ctx.stroke();
+                    break;
+                case 'eletro':
+                    ctx.fillStyle = 'blue';
+                    ctx.beginPath();
+                    // começa no topo do raio
+                    ctx.moveTo(x, y - 12);
+                    // zig-zag descendo
+                    ctx.lineTo(x + 4, y - 4);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(x + 6, y + 8);
+                    ctx.lineTo(x - 2, y + 2);
+                    ctx.lineTo(x + 2, y + 2);
+                    ctx.lineTo(x - 4, y + 12);
+                    ctx.lineTo(x - 2, y + 0);
+                    ctx.lineTo(x - 6, y + 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+            }
+        };
+
+        // Ativa o command-box ao clicar no ícone
+        document.getElementById('command-btn').addEventListener('click', () => {
+            document.getElementById('command-box').style.display = 'block';
+        });
+        // Fecha a caixa
+        document.getElementById('close-cmds').addEventListener('click', () => {
+            document.getElementById('command-box').style.display = 'none';
+        });
+        // Copia todos os comandos para a área de transferência
+        document.getElementById('copy-cmds').addEventListener('click', () => {
+            const cmds = Array.from(
+                document.querySelectorAll('#command-box ul li code')
+            ).map(c => c.textContent).join('\n');
+            navigator.clipboard.writeText(cmds);
+            alert('Comandos copiados!');
+        });
+        // Atalho: tecla D sobre o título
+        const title = document.querySelector('h1');
+        title.setAttribute('tabindex', '0'); // torna focável
+        title.addEventListener('keydown', e => {
+            if (e.key.toUpperCase() === 'D') {
+                document.getElementById('command-box').style.display = 'block';
+            }
+        });
+
+        function drawInfernalStage(ctx, stage) {
+            const centerX = ctx.canvas.width / 2;
+            const centerY = ctx.canvas.height / 2;
+            // configura estilo conforme estágio
+            if (stage === 1) {
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = 'yellow';
+                ctx.shadowBlur = 10;
+            } else if (stage === 2) {
+                ctx.strokeStyle = 'orange';
+                ctx.lineWidth = 5;
+                ctx.shadowColor = 'orange';
+                ctx.shadowBlur = 15;
+            } else {
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 9;
+                ctx.shadowColor = 'red';
+                ctx.shadowBlur = 20;
+            }
+            // desenha torre base
+            ctx.fillStyle = '#400000';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+            ctx.fill();
+            // desenha laser fixo até a borda direita
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(ctx.canvas.width, centerY);
+            ctx.stroke();
+            // limpa shadow
+            ctx.shadowBlur = 0;
+        }
+
+        Object.assign(Drawer, {
+            // 1) Fabricadora de Mana
+            drawFabricadoraMana: (ctx, x, y) => {
+                const size = 14;            // this.size em FabricadoraManaTower :contentReference[oaicite:8]{index=8}
+                const color = 'purple';     // this.color em FabricadoraManaTower :contentReference[oaicite:9]{index=9}
+                // corpo
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                // losango branco central
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(x, y - size * 0.6);
+                ctx.lineTo(x + size * 0.6, y);
+                ctx.lineTo(x, y + size * 0.6);
+                ctx.lineTo(x - size * 0.6, y);
+                ctx.closePath();
+                ctx.fill();
+            },
+
+            // 2) Shotgun de Mana
+            drawShotgunMana: (ctx, x, y) => {
+                const size = 14;            // this.size em ShotgunManaTower :contentReference[oaicite:10]{index=10}
+                const color = '#00A2FF';    // this.color em ShotgunManaTower :contentReference[oaicite:11]{index=11}
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                // três traços brancos para os pellets
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                for (let i = -1; i <= 1; i++) {
+                    const angle = (Math.PI / 6) * i;
+                    const x1 = x + Math.cos(angle) * size * 0.6;
+                    const y1 = y + Math.sin(angle) * size * 0.6;
+                    const x2 = x + Math.cos(angle) * size * 1.2;
+                    const y2 = y + Math.sin(angle) * size * 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
+            },
+
+            // 3) Coletora de Dinheiro
+            drawColetoraDinheiro: (ctx, x, y) => {
+                const size = 14;         // this.size em ColetoraDinheiroTower :contentReference[oaicite:12]{index=12}
+                const color = 'gold';    // this.color em ColetoraDinheiroTower :contentReference[oaicite:13]{index=13}
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                // cifrão simples
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', x, y);
+            },
+
+            // 4) Torre da Fúria
+            drawFuryMana: (ctx, x, y) => {
+                const size = 14;             // this.size em FuryManaTower :contentReference[oaicite:14]{index=14}
+                const color = 'rgb(255,0,0)';// this.color em FuryManaTower :contentReference[oaicite:15]{index=15}
+                const aura = 22;             // escala para range=120px/em proporção
+                // corpo
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                // aura de buff
+                ctx.strokeStyle = 'rgba(255,0,0,0.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, aura, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        });
+
+        const key = 'viuAsInformacoes';
+        function marcaComoVisto() {
+            if (!sessionStorage.getItem(key)) {
+                sessionStorage.setItem(key, 'true');
+                // opcional: feedback visual
+                alert('🎁 Parabéns! Você liberou 1 Torre Metralhadora e 1 Torre Evolutiva grátis no próximo jogo.');
+            }
+        }
+
+        // Função que desenha tudo quando a página carrega
+        window.onload = () => {
+            const drawOnCanvas = (canvasId, drawFunction, ...args) => {
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    const x = canvas.width / 2;
+                    const y = canvas.height / 2;
+                    drawFunction(ctx, x, y, ...args);
+                }
+            };
+
+            ['inferno1', 'inferno2', 'inferno3'].forEach((id, idx) => {
+                const canvas = document.getElementById(id);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    drawInfernalStage(ctx, idx + 1);
+                }
+            });
+
+            // Torres
+            drawOnCanvas('evo1', Drawer.drawEvolutiva, 1);
+            drawOnCanvas('evo2', Drawer.drawEvolutiva, 2);
+            drawOnCanvas('evo3', Drawer.drawEvolutiva, 3);
+            drawOnCanvas('evo4', Drawer.drawEvolutiva, 4);
+            drawOnCanvas('evo5', Drawer.drawEvolutiva, 5);
+            drawOnCanvas('evo6', Drawer.drawEvolutiva, 6);
+            drawOnCanvas('eletro', Drawer.drawEletro);
+            drawOnCanvas('metralhadora', Drawer.drawMetralhadora);
+            drawOnCanvas('balanceada', Drawer.drawBalanceada);
+            drawOnCanvas('morteiro', Drawer.drawMorteiro);
+            drawOnCanvas('gelo', Drawer.drawGelo);
+
+            drawOnCanvas('fabricadora-mana', Drawer.drawFabricadoraMana);
+            drawOnCanvas('shotgun-mana', Drawer.drawShotgunMana);
+            drawOnCanvas('coletora-dinheiro', Drawer.drawColetoraDinheiro);
+            drawOnCanvas('torre-furia', Drawer.drawFuryMana);
+
+            ['evolutiva', 'metralhadora', 'balanceada', 'morteiro', 'gelo', 'infernal', 'eletro']
+                .forEach((key, i) => {
+                    const canvas = document.getElementById(`evo-icon-${key}`);
+                    if (canvas) Drawer.drawEvoIcon(canvas.getContext('2d'), canvas.width / 2, canvas.height / 2, key);
+                });
+
+            // Inimigos
+            drawOnCanvas('normal', Drawer.drawNormal);
+            drawOnCanvas('rapido', Drawer.drawRapido);
+            drawOnCanvas('tank', Drawer.drawTank);
+            drawOnCanvas('invocador', Drawer.drawInvocador);
+            drawOnCanvas('disruptor', Drawer.drawDisruptor);
+            drawOnCanvas('fantasma', Drawer.drawFantasma);
+            drawOnCanvas('monge', Drawer.drawMonge);
+            drawOnCanvas('cavaleiro', Drawer.drawCavaleiro);
+            drawOnCanvas('rei', Drawer.drawRei);
+
+            // Chefe com cor animada
+            let hue = 0;
+            setInterval(() => {
+                hue = (hue + 2) % 360;
+                drawOnCanvas('chefe', (ctx, x, y) => {
+                    ctx.clearRect(0, 0, 50, 50); // Limpa o canvas do chefe antes de redesenhar
+                    Drawer.drawChefe(ctx, x, y, hue);
+                });
+            }, 50);
+        };
+
+        window.addEventListener('scroll', () => {
+            // Se o topo da viewport + altura da viewport alcança o fim do documento:
+            if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
+                marcaComoVisto();
+            }
+        });
+    </script>
+</body>
+
+</html>
