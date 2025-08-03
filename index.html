@@ -262,6 +262,114 @@
             /* Um rosa/magenta para diferenciar da seleção de torre */
             background-color: #509;
         }
+
+        @media (max-width: 1100px) {
+            body {
+                padding: 10px;
+            }
+
+            #ui-container,
+            #custom-spawn-controls,
+            #evolution-shop,
+            #powerup-shop {
+                width: 90%;
+                margin: 0 auto 10px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            #ui-container {
+                gap: 8px;
+            }
+
+            #stats span {
+                display: block;
+                margin: 4px 0;
+            }
+
+            canvas {
+                width: 100%;
+                height: auto;
+                max-width: 100%;
+            }
+
+            .tower-button,
+            .shop-button,
+            .spawn-btn,
+            #challenge-btn {
+                flex: 1;
+                padding: 8px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* 2) Médios – até 720px (Ex: A30, A14 5G) */
+        @media (max-width: 1000px) {
+
+            #ui-container,
+            #custom-spawn-controls,
+            #evolution-shop,
+            #powerup-shop {
+                width: 100%;
+                padding: 8px;
+            }
+
+            #difficulty-selection-screen .difficulty-box {
+                width: 45%;
+                /* de 90% para 45% */
+                padding: 12px;
+                /* reduz um pouco o padding */
+                font-size: 0.9em;
+                /* ajusta o texto para caber melhor */
+                margin: 4px auto;
+                /* espaço entre as caixas */
+            }
+
+            #tower-selection,
+            #powerup-list,
+            #evolution-list {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .tower-button,
+            .shop-button,
+            .diff-btn {
+                padding: 6px 10px;
+                font-size: 0.85em;
+            }
+
+            #difficulty-selection-screen .difficulty-box {
+                width: 90%;
+                padding: 20px;
+            }
+        }
+
+        /* 3) Pequenos – até 360px */
+        @media (max-width: 360px) {
+            body {
+                padding: 5px;
+                font-size: 14px;
+            }
+
+            #stats span {
+                font-size: 0.8em;
+            }
+
+            .tower-button,
+            .shop-button,
+            .spawn-btn,
+            .diff-btn {
+                padding: 5px 8px;
+                font-size: 0.8em;
+            }
+
+            #challenge-btn {
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+        }
     </style>
 </head>
 
@@ -859,9 +967,16 @@
 
             attack(timestamp) {
                 // 0) sem evolução: só dispara tiro em ARCO normal
+
+
+
                 if (!purchasedEvolutions.morteiro) {
                     if (!this.target) return;
-                    if (timestamp - this.lastShotTime < this.cooldown) return;
+                    // 1) calcula slowFactor (0.3 dentro da aura de Fúria, 1 fora)
+                    const slowFactor = this.getFurySlowFactor();
+                    // 2) aplica o buff de recarga (30% do normal quando buffered)
+                    const effectiveCooldown = this.cooldown * slowFactor;
+                    if (timestamp - this.lastShotTime < effectiveCooldown) return;
                     this.lastShotTime = timestamp;
 
                     projectiles.push(
@@ -2004,7 +2119,28 @@
                 } else if (type === 'mortar_slow') {
                     this.effects.mortar_slow.strength = Math.min(0.60, this.effects.mortar_slow.strength + data.amount);
                     this.effects.mortar_slow.duration = Math.min(18000, this.effects.mortar_slow.duration + 3000 / 60);
+                } else if (type === 'poison') {
+                    // Empilha um novo veneno sem remover o anterior
+                    const effect = {
+                        type,
+                        endTime: Date.now() + duration,
+                        dps: data.dps,
+                        stackBonus: data.stackBonus,
+                        maxStacks: data.maxStacks,
+                        maxDps: data.maxDps
+                    };
+                    this.effects.timed.push(effect);
+                    // Se passou do limite de pilhas, remove a mais antiga
+                    const poisonEffects = this.effects.timed
+                        .filter(e => e.type === 'poison')
+                        .sort((a, b) => a.endTime - b.endTime);
+                    if (poisonEffects.length > data.maxStacks) {
+                        const oldest = poisonEffects[0];
+                        const idx = this.effects.timed.indexOf(oldest);
+                        this.effects.timed.splice(idx, 1);
+                    }
                 } else {
+                    // Para outros efeitos, mantemos a lógica anterior de substituir
                     const existingEffectIndex = this.effects.timed.findIndex(e => e.type === type);
                     if (existingEffectIndex > -1) this.effects.timed.splice(existingEffectIndex, 1);
                     this.effects.timed.push({ type, endTime: Date.now() + duration, ...data });
@@ -2064,7 +2200,17 @@
             move() {
                 if (this.pathIndex >= path.length - 1) {
                     lives--;
-                    this.health = 0; this.die();
+                    // Atualiza o contador de vidas na UI
+                    document.getElementById('lives').textContent = `Vidas: ${lives}`;
+                    // Se zerou as vidas, mostra tela de Game Over e para o loop
+                    if (lives <= 0) {
+                        document.getElementById('game-over-screen').style.display = 'block';
+                        gameRunning = false;
+                        cancelAnimationFrame(game._loopId);
+                        return;
+                    }
+                    this.health = 0;
+                    this.die();
                     return;
                 }
                 const targetPoint = path[this.pathIndex + 1];
@@ -3885,6 +4031,14 @@
         function startGame(difficulty) {
             currentDifficulty = difficulty;
             const settings = DIFFICULTY_SETTINGS[difficulty];
+
+            const aduboCount = parseInt(localStorage.getItem('adubo') || '0', 10);
+            if (aduboCount >= 1) {
+                const bonus = 1000;
+                money += bonus;
+                console.log(`Veterano detectado (adubo=${aduboCount})! +${bonus} moedas de bônus.`);
+                showNotification(`Bônus de Veterano: +${bonus} moedas!`);
+            }
 
             document.getElementById('difficulty-selection-screen').style.display = 'none';
             clearInterval(difficultyTimerInterval);
